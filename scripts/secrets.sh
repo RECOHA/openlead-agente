@@ -57,7 +57,8 @@ cmd_encrypt() {
     [[ -z "$f" ]] && continue
     out="$f.enc"
     # Só recriptografa se o conteúdo mudou (evita diffs inúteis no git)
-    if [[ -f "$out" ]] && diff -q <(sops decrypt --input-type dotenv --output-type dotenv "$out") "$f" >/dev/null 2>&1; then
+    # (sed '$a\' normaliza a quebra de linha final, que o SOPS sempre adiciona)
+    if [[ -f "$out" ]] && cmp -s <(sops decrypt --input-type dotenv --output-type dotenv "$out" 2>/dev/null | sed '$a\') <(sed '$a\' "$f"); then
       echo "inalterado: $out"
       continue
     fi
