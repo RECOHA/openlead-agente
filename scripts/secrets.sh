@@ -37,6 +37,10 @@ enc_files() {
 # .env.* usam formato dotenv (diff legível: nomes visíveis, valores cifrados); o resto, binário.
 sops_type() { case "$(basename "${1%.enc}")" in .env.*) echo dotenv ;; *) echo binary ;; esac; }
 
+# No dotenv o SOPS descarta linhas em branco e garante quebra de linha final;
+# normaliza os dois lados para a comparação não acusar mudança falsa.
+normalize() { if [[ "$1" == dotenv ]]; then tr -d '\r' | sed -e '/^[[:space:]]*$/d' -e '$a\'; else cat; fi; }
+
 cmd_init() {
   need age-keygen
   if [[ ! -f "$KEY_FILE" ]]; then
@@ -69,8 +73,7 @@ cmd_encrypt() {
     f="${f#./}"; [[ -z "$f" ]] && continue
     out="$f.enc"; t="$(sops_type "$f")"
     # Só recriptografa se o conteúdo mudou (evita diffs inúteis no git).
-    # sed '$a\' normaliza a quebra de linha final, que o SOPS adiciona no dotenv.
-    if [[ -f "$out" ]] && cmp -s <(sops decrypt --input-type "$t" --output-type "$t" "$out" 2>/dev/null | sed '$a\') <(sed '$a\' "$f"); then
+    if [[ -f "$out" ]] && cmp -s <(sops decrypt --input-type "$t" --output-type "$t" "$out" 2>/dev/null | normalize "$t") <(normalize "$t" < "$f"); then
       echo "inalterado: $out"
       continue
     fi
