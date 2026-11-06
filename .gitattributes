@@ -4,3 +4,4 @@
 .env.*.enc  text eol=lf
 .sops.yaml  text eol=lf
 secrets/*.enc text eol=lf
+infra/**    text eol=lf
