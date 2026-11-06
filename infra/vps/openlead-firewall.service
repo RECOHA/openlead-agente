@@ -1,0 +1,12 @@
+[Unit]
+Description=openlead-agente: bloqueia portas internas do Coolify
+After=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/openlead-firewall.sh
+
+[Install]
+WantedBy=multi-user.target docker.service
