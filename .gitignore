@@ -1,0 +1,11 @@
+# ─── Segredos ────────────────────────────────────────────────────
+# Arquivos .env em texto puro NUNCA são versionados.
+# Versione apenas a cópia criptografada com SOPS: .env.<nome>.enc
+# (gere com: scripts/secrets.sh encrypt)
+.env
+.env.*
+!.env.*.enc
+
+# Chaves privadas do age (nunca versionar)
+keys.txt
+*.agekey
