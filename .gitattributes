@@ -1,0 +1,5 @@
+# Scripts e segredos sempre com LF (CRLF quebra bash e o MAC do SOPS)
+*.sh        text eol=lf
+.githooks/* text eol=lf
+.env.*.enc  text eol=lf
+.sops.yaml  text eol=lf
