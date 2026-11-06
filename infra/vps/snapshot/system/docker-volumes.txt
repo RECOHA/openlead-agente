@@ -1,0 +1,2 @@
+coolify-db
+coolify-redis

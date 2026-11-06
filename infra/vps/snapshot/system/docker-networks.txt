@@ -1,0 +1,5 @@
+bridge	bridge
+coolify	bridge
+host	host
+none	null
+source_default	bridge

@@ -1,0 +1,5 @@
+### /root
+256 SHA256:2dtgP2pIfb3AfA2gduZBKdxes1O/SUgFvuaAfn9Sr2o coolify (ED25519)
+256 SHA256:0BU3t7CJFkZ4DdZm0W1nHza43L65BVSUcjfFwo9jiI0 openlead-agente@server.openlead.app (ED25519)
+### /home/ubuntu
+/home/ubuntu/.ssh/authorized_keys is not a public key file.

@@ -1,0 +1,72 @@
+# iptables (IPv4)
+-P INPUT ACCEPT
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-N DOCKER
+-N DOCKER-BRIDGE
+-N DOCKER-CT
+-N DOCKER-FORWARD
+-N DOCKER-INTERNAL
+-N DOCKER-USER
+-A INPUT -i eth0 -p tcp -m multiport --dports 8000,6001,6002,8080 -j DROP
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-A DOCKER -d 10.0.1.2/32 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 8080 -j ACCEPT
+-A DOCKER -d 10.0.1.2/32 ! -i br-1f65755510fe -o br-1f65755510fe -p udp -m udp --dport 443 -j ACCEPT
+-A DOCKER -d 10.0.1.2/32 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 443 -j ACCEPT
+-A DOCKER -d 10.0.1.2/32 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 80 -j ACCEPT
+-A DOCKER -d 10.0.1.7/32 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 8080 -j ACCEPT
+-A DOCKER -d 10.0.1.7/32 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 6002 -j ACCEPT
+-A DOCKER -d 10.0.1.7/32 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 6001 -j ACCEPT
+-A DOCKER ! -i br-16e243f22ce3 -o br-16e243f22ce3 -j DROP
+-A DOCKER ! -i br-1f65755510fe -o br-1f65755510fe -j DROP
+-A DOCKER ! -i docker0 -o docker0 -j DROP
+-A DOCKER-BRIDGE -o br-16e243f22ce3 -j DOCKER
+-A DOCKER-BRIDGE -o br-1f65755510fe -j DOCKER
+-A DOCKER-BRIDGE -o docker0 -j DOCKER
+-A DOCKER-CT -o br-16e243f22ce3 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o br-1f65755510fe -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-FORWARD -j DOCKER-CT
+-A DOCKER-FORWARD -j DOCKER-INTERNAL
+-A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-FORWARD -i br-16e243f22ce3 -j ACCEPT
+-A DOCKER-FORWARD -i br-1f65755510fe -j ACCEPT
+-A DOCKER-FORWARD -i docker0 -j ACCEPT
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8080 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
+
+# ip6tables (IPv6)
+-P INPUT ACCEPT
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-N DOCKER
+-N DOCKER-BRIDGE
+-N DOCKER-CT
+-N DOCKER-FORWARD
+-N DOCKER-INTERNAL
+-N DOCKER-USER
+-A INPUT -i eth0 -p tcp -m multiport --dports 8000,6001,6002,8080 -j DROP
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-A DOCKER -d fdb6:d90:a1e5::2/128 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 8080 -j ACCEPT
+-A DOCKER -d fdb6:d90:a1e5::2/128 ! -i br-1f65755510fe -o br-1f65755510fe -p udp -m udp --dport 443 -j ACCEPT
+-A DOCKER -d fdb6:d90:a1e5::2/128 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 443 -j ACCEPT
+-A DOCKER -d fdb6:d90:a1e5::2/128 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 80 -j ACCEPT
+-A DOCKER -d fdb6:d90:a1e5::7/128 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 8080 -j ACCEPT
+-A DOCKER -d fdb6:d90:a1e5::7/128 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 6002 -j ACCEPT
+-A DOCKER -d fdb6:d90:a1e5::7/128 ! -i br-1f65755510fe -o br-1f65755510fe -p tcp -m tcp --dport 6001 -j ACCEPT
+-A DOCKER ! -i br-1f65755510fe -o br-1f65755510fe -j DROP
+-A DOCKER-BRIDGE -o br-1f65755510fe -j DOCKER
+-A DOCKER-CT -o br-1f65755510fe -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-FORWARD -j DOCKER-CT
+-A DOCKER-FORWARD -j DOCKER-INTERNAL
+-A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-FORWARD -i br-1f65755510fe -j ACCEPT
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8080 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
+ufw: Status: inactive

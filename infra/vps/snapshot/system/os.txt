@@ -1,0 +1,10 @@
+PRETTY_NAME="Ubuntu 26.04.1 LTS"
+VERSION_ID="26.04"
+kernel=7.0.0-43-generic
+hostname=vmi3733204
+cpus=4
+mem_total=7.7Gi
+swap_total=0B
+disk_root=96G
+timezone=Europe/Berlin
+docker=29.9.3

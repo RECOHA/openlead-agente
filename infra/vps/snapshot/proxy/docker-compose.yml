@@ -1,0 +1,73 @@
+name: coolify-proxy
+networks:
+  coolify:
+    external: true
+services:
+  traefik:
+    container_name: coolify-proxy
+    image: 'traefik:v3.7'
+    restart: unless-stopped
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - coolify
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+      - '8080:8080'
+    healthcheck:
+      test: 'wget -qO- http://localhost:80/ping || exit 1'
+      interval: 4s
+      timeout: 2s
+      retries: 5
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      - '/data/coolify/proxy/:/traefik'
+    command:
+      - '--ping=true'
+      - '--ping.entrypoint=http'
+      - '--api.dashboard=true'
+      - '--entrypoints.http.address=:80'
+      - '--entrypoints.https.address=:443'
+      - '--entrypoints.http.http.encodequerysemicolons=true'
+      - '--entryPoints.http.http2.maxConcurrentStreams=250'
+      - '--entrypoints.https.http.encodequerysemicolons=true'
+      - '--entryPoints.https.http2.maxConcurrentStreams=250'
+      - '--entrypoints.https.http3'
+      - '--providers.file.directory=/traefik/dynamic/'
+      - '--providers.file.watch=true'
+      - '--certificatesresolvers.letsencrypt.acme.httpchallenge=true'
+      - '--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http'
+      - '--certificatesresolvers.letsencrypt.acme.storage=/traefik/acme.json'
+      - '--api.insecure=false'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--accesslog=true'
+      - '--accesslog.filepath=/traefik/access.log'
+      - '--accesslog.format=json'
+      - '--accesslog.fields.headers.names.Cf-Connecting-Ip=keep'
+      - '--accesslog.fields.headers.names.Cf-Ipcountry=keep'
+      - '--accesslog.fields.headers.names.Cf-Cache-Status=keep'
+      - '--accesslog.fields.headers.names.Cf-Verified-Bot=keep'
+      - '--accesslog.fields.headers.names.Cf-Ray=keep'
+      - '--accesslog.fields.headers.names.X-Forwarded-For=keep'
+      - '--accesslog.fields.headers.names.User-Agent=keep'
+      - '--accesslog.fields.headers.names.Referer=keep'
+    labels:
+      - traefik.enable=false
+      - coolify.managed=true
+      - coolify.proxy=true
+  traefik-logrotate:
+    container_name: coolify-proxy-logrotate
+    image: 'alpine:3.24'
+    restart: unless-stopped
+    network_mode: none
+    volumes:
+      - '/data/coolify/proxy/:/traefik'
+    labels:
+      - coolify.managed=true
+    entrypoint:
+      - /bin/sh
+      - '-c'
+      - "log=\"$${TRAEFIK_ACCESS_LOG:-/traefik/access.log}\"\nmax_bytes=\"$${TRAEFIK_ACCESS_LOG_MAX_BYTES:-20971520}\"\ninterval=\"$${TRAEFIK_ACCESS_LOG_ROTATE_INTERVAL:-60}\"\nkeep=5\nwhile true; do\n  size=$$(stat -c %s \"$$log\" 2>/dev/null || echo 0)\n  if [ \"$$size\" -gt \"$$max_bytes\" ]; then\n    rm -f \"$$log.$$keep.gz\"\n    i=$$((keep - 1))\n    while [ \"$$i\" -ge 1 ]; do\n      if [ -f \"$$log.$$i.gz\" ]; then mv -f \"$$log.$$i.gz\" \"$$log.$$((i + 1)).gz\"; fi\n      i=$$((i - 1))\n    done\n    if cp \"$$log\" \"$$log.1\"; then\n      : > \"$$log\"\n      gzip -f \"$$log.1\"\n    fi\n  fi\n  sleep \"$$interval\"\ndone"

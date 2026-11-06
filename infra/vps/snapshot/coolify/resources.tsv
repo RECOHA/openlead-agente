@@ -1,0 +1,20 @@
+## servers
+id	name	ip	user	port
+0	VPS-00	host.docker.internal	root	22
+
+## projects
+id	name
+
+## environments
+id	name	project_id
+
+## applications
+uuid	name	fqdn	git_repository	git_branch	build_pack	environment_id
+
+## services
+uuid	name	environment_id
+
+## databases
+
+## scheduled_database_backups
+id	frequency	enabled
