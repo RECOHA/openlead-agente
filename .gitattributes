@@ -3,3 +3,4 @@
 .githooks/* text eol=lf
 .env.*.enc  text eol=lf
 .sops.yaml  text eol=lf
+secrets/*.enc text eol=lf

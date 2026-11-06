@@ -6,6 +6,11 @@
 .env.*
 !.env.*.enc
 
+# Outros segredos (chaves SSH, certificados...) ficam em secrets/
+# e também só entram no git criptografados: secrets/<nome>.enc
+secrets/*
+!secrets/*.enc
+
 # Chaves privadas do age (nunca versionar)
 keys.txt
 *.agekey

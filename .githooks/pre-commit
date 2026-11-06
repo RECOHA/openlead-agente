@@ -1,23 +1,27 @@
 #!/usr/bin/env bash
-# Bloqueia commit de arquivos .env em texto puro.
-# - .env / .env.<nome>      -> sempre bloqueado
-# - .env.<nome>.enc         -> só passa se estiver criptografado pelo SOPS
+# Bloqueia commit de segredos em texto puro.
+# - .env / .env.<nome> / secrets/<arquivo>    -> sempre bloqueado
+# - .env.<nome>.enc / secrets/<arquivo>.enc   -> só passa se estiver criptografado pelo SOPS
 set -euo pipefail
+
+# Assinatura do MAC do SOPS: dotenv (sops_mac=ENC[...]) ou binário/JSON ("mac": "ENC[...]")
+is_sops() { git show ":$1" | grep -Eq '(^sops_mac=|"mac": *")ENC\[AES256_GCM'; }
 
 fail=0
 while IFS= read -r f; do
   base="$(basename "$f")"
-  case "$base" in
-    .env.*.enc)
-      if ! git show ":$f" | grep -q '^sops_mac=ENC\['; then
-        echo "BLOQUEADO: $f não está criptografado pelo SOPS." >&2
-        fail=1
-      fi
-      ;;
-    .env|.env.*)
-      echo "BLOQUEADO: $f é um .env em texto puro. Use: scripts/secrets.sh encrypt" >&2
-      fail=1
-      ;;
+  case "$f" in
+    secrets/*.enc|*/secrets/*.enc) secret=enc ;;
+    secrets/*|*/secrets/*)         secret=plain ;;
+    *) case "$base" in
+         .env.*.enc)  secret=enc ;;
+         .env|.env.*) secret=plain ;;
+         *)           secret=no ;;
+       esac ;;
+  esac
+  case "$secret" in
+    enc)   is_sops "$f" || { echo "BLOQUEADO: $f não está criptografado pelo SOPS." >&2; fail=1; } ;;
+    plain) echo "BLOQUEADO: $f é um segredo em texto puro. Use: scripts/secrets.sh encrypt" >&2; fail=1 ;;
   esac
 done < <(git diff --cached --name-only --diff-filter=ACMR)
 

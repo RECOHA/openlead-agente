@@ -1,6 +1,6 @@
 # Regras do SOPS. Para dar acesso a outra pessoa/máquina, adicione a chave
 # pública dela em "age" (separada por vírgula) e rode: sops updatekeys <arquivo>.enc
 creation_rules:
-  - path_regex: (^|/)\.env(\.[^/]+)?$
+  - path_regex: (^|[/\\])(\.env(\.[^/\\]+)?|secrets[/\\][^/\\]+)$
     age: >-
       age1p2ff2ruhj26789sg6x0dg6xgtqt4cr6qfv5ns58yru70k7qlyylsqsd47e

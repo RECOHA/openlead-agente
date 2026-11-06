@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Gerencia os segredos .env.* do projeto com SOPS + age.
+# Gerencia os segredos do projeto com SOPS + age.
 #
 #   scripts/secrets.sh init      Cria sua chave age (se faltar) e o .sops.yaml
-#   scripts/secrets.sh encrypt   .env.<nome>      -> .env.<nome>.enc  (versionado)
-#   scripts/secrets.sh decrypt   .env.<nome>.enc  -> .env.<nome>      (ignorado pelo git)
-#   scripts/secrets.sh hooks     Ativa o hook de pre-commit que bloqueia .env em texto puro
+#   scripts/secrets.sh encrypt   .env.<nome> -> .env.<nome>.enc  |  secrets/<arq> -> secrets/<arq>.enc
+#   scripts/secrets.sh decrypt   o inverso (os arquivos abertos são ignorados pelo git)
+#   scripts/secrets.sh hooks     Ativa o hook de pre-commit que bloqueia segredos em texto puro
 #
 # Requer: sops (>= 3.9) e age no PATH.
 set -euo pipefail
@@ -22,15 +22,27 @@ fi
 
 need() { command -v "$1" >/dev/null || { echo "erro: '$1' não encontrado no PATH" >&2; exit 1; }; }
 
-# Arquivos .env.* em texto puro (exclui os .enc e o .git)
-plain_files() { find . -path ./.git -prune -o -type f -name '.env.*' ! -name '*.enc' -print | sed 's|^\./||'; }
-enc_files()   { find . -path ./.git -prune -o -type f -name '.env.*.enc' -print | sed 's|^\./||'; }
+# Segredos em texto puro: .env.* em qualquer pasta + qualquer arquivo em secrets/ (exceto .enc)
+plain_files() {
+  find . -path ./.git -prune -o -type f -name '.env.*' ! -name '*.enc' -print
+  [[ -d secrets ]] && find secrets -maxdepth 1 -type f ! -name '*.enc' -print
+  true
+}
+enc_files() {
+  find . -path ./.git -prune -o -type f -name '.env.*.enc' -print
+  [[ -d secrets ]] && find secrets -maxdepth 1 -type f -name '*.enc' -print
+  true
+}
+
+# .env.* usam formato dotenv (diff legível: nomes visíveis, valores cifrados); o resto, binário.
+sops_type() { case "$(basename "${1%.enc}")" in .env.*) echo dotenv ;; *) echo binary ;; esac; }
 
 cmd_init() {
   need age-keygen
   if [[ ! -f "$KEY_FILE" ]]; then
     mkdir -p "$(dirname "$KEY_FILE")"
     age-keygen -o "$KEY_FILE"
+    chmod 600 "$KEY_FILE" 2>/dev/null || true
     echo "Chave privada criada em: $KEY_FILE  (FAÇA BACKUP — sem ela os segredos não abrem)"
   fi
   local pub
@@ -40,7 +52,7 @@ cmd_init() {
 # Regras do SOPS. Para dar acesso a outra pessoa/máquina, adicione a chave
 # pública dela em "age" (separada por vírgula) e rode: sops updatekeys <arquivo>.enc
 creation_rules:
-  - path_regex: (^|/)\.env(\.[^/]+)?\$
+  - path_regex: (^|[/\\\\])(\.env(\.[^/\\\\]+)?|secrets[/\\\\][^/\\\\]+)\$
     age: >-
       $pub
 EOF
@@ -52,17 +64,17 @@ EOF
 
 cmd_encrypt() {
   need sops
-  local f out
+  local f out t
   while IFS= read -r f; do
-    [[ -z "$f" ]] && continue
-    out="$f.enc"
-    # Só recriptografa se o conteúdo mudou (evita diffs inúteis no git)
-    # (sed '$a\' normaliza a quebra de linha final, que o SOPS sempre adiciona)
-    if [[ -f "$out" ]] && cmp -s <(sops decrypt --input-type dotenv --output-type dotenv "$out" 2>/dev/null | sed '$a\') <(sed '$a\' "$f"); then
+    f="${f#./}"; [[ -z "$f" ]] && continue
+    out="$f.enc"; t="$(sops_type "$f")"
+    # Só recriptografa se o conteúdo mudou (evita diffs inúteis no git).
+    # sed '$a\' normaliza a quebra de linha final, que o SOPS adiciona no dotenv.
+    if [[ -f "$out" ]] && cmp -s <(sops decrypt --input-type "$t" --output-type "$t" "$out" 2>/dev/null | sed '$a\') <(sed '$a\' "$f"); then
       echo "inalterado: $out"
       continue
     fi
-    sops encrypt --input-type dotenv --output-type dotenv --filename-override "$out" "$f" > "$out.tmp"
+    sops encrypt --input-type "$t" --output-type "$t" --filename-override "$out" "$f" > "$out.tmp"
     mv "$out.tmp" "$out"
     echo "criptografado: $f -> $out"
   done < <(plain_files)
@@ -70,12 +82,13 @@ cmd_encrypt() {
 
 cmd_decrypt() {
   need sops
-  local f out
+  local f out t
   while IFS= read -r f; do
-    [[ -z "$f" ]] && continue
-    out="${f%.enc}"
-    sops decrypt --input-type dotenv --output-type dotenv "$f" > "$out.tmp"
+    f="${f#./}"; [[ -z "$f" ]] && continue
+    out="${f%.enc}"; t="$(sops_type "$f")"
+    (umask 077; sops decrypt --input-type "$t" --output-type "$t" "$f" > "$out.tmp")
     mv "$out.tmp" "$out"
+    chmod 600 "$out" 2>/dev/null || true
     echo "descriptografado: $f -> $out"
   done < <(enc_files)
 }
