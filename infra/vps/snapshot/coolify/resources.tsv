@@ -1,6 +1,7 @@
 ## servers
 id	name	ip	user	port
 0	VPS-00	host.docker.internal	root	22
+1	VPS-01	179.197.231.251	root	22
 
 ## projects
 id	name

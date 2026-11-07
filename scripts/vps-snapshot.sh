@@ -1,19 +1,26 @@
 #!/usr/bin/env bash
-# Tira uma "foto" da VPS e salva em infra/vps/snapshot/ (só LEITURA: não muda nada lá).
-#   scripts/vps-snapshot.sh        atualiza a foto; depois veja o que mudou com: git diff infra/vps/snapshot
+# Tira uma "foto" da VPS e salva em infra/vps/ (só LEITURA: não muda nada lá).
+#   scripts/vps-snapshot.sh          VPS-00 (Coolify)  -> infra/vps/snapshot/
+#   scripts/vps-snapshot.sh vps-01   VPS-01 (servidor) -> infra/vps/snapshot-vps-01/
+# Depois veja o que mudou com: git diff infra/vps
 # Segredos NUNCA vêm em texto puro: dos .env só vêm os nomes das variáveis;
 # acme.json (certificados) e chaves SSH não são copiados.
 # Requer os segredos abertos: scripts/secrets.sh decrypt
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-OUT=infra/vps/snapshot
+TARGET="${1:-vps-00}"
+case "$TARGET" in
+  vps-00) OUT=infra/vps/snapshot ;;
+  vps-01) OUT=infra/vps/snapshot-vps-01 ;;
+  *) echo "uso: $0 [vps-00|vps-01]" >&2; exit 1 ;;
+esac
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 # ─── Parte que roda na VPS ─────────────────────────────────────────
 # Monta tudo numa pasta temporária lá e devolve como .tar.gz pelo stdout.
-scripts/vps.sh 'bash -s' > "$TMP/snap.tgz" <<'REMOTE'
+scripts/vps.sh "$TARGET" 'bash -s' > "$TMP/snap.tgz" <<'REMOTE'
 set -uo pipefail
 S="$(mktemp -d)"; trap 'rm -rf "$S"' EXIT
 mkdir -p "$S/system" "$S/coolify" "$S/proxy/dynamic" "$S/deployed"
@@ -46,7 +53,8 @@ docker network ls --format '{{.Name}}\t{{.Driver}}' | sort > "$S/system/docker-n
 docker volume ls --format '{{.Name}}' | sort > "$S/system/docker-volumes.txt"
 cat /etc/docker/daemon.json > "$S/system/docker-daemon.json" 2>/dev/null || echo "(não existe)" > "$S/system/docker-daemon.json"
 
-# Coolify (instalação)
+# Coolify (instalação): só na VPS onde o Coolify roda
+if [ -d /data/coolify/source ]; then
 cp /data/coolify/source/docker-compose.yml /data/coolify/source/docker-compose.prod.yml "$S/coolify/"
 keys /data/coolify/source/.env            > "$S/coolify/env-keys.txt"
 keys /data/coolify/source/.env.production > "$S/coolify/env.production-keys.txt"
@@ -63,6 +71,7 @@ sed -e '/^[[:space:]]*$/d' /data/coolify/source/.env | sha256sum | cut -d' ' -f1
                                   psql "select '$t' as type, uuid, name, image, environment_id from $t order by id" | tail -n +2; done
   echo; echo "## scheduled_database_backups"; psql 'select id, frequency, enabled from scheduled_database_backups order by id'
 } > "$S/coolify/resources.tsv"
+fi
 
 # Proxy (Traefik)
 cp /data/coolify/proxy/docker-compose.yml "$S/proxy/"
@@ -70,7 +79,9 @@ cp /data/coolify/proxy/dynamic/* "$S/proxy/dynamic/" 2>/dev/null
 # acme.json tem as chaves privadas dos certificados: só lemos os domínios.
 python3 - > "$S/proxy/certificates.txt" 2>&1 <<'PY'
 import json
-d = json.load(open("/data/coolify/proxy/acme.json"))
+import os
+p = "/data/coolify/proxy/acme.json"
+d = json.load(open(p)) if os.path.exists(p) and os.path.getsize(p) else {}
 doms = sorted(" ".join([c["domain"]["main"], *c["domain"].get("sans", [])])
               for r in d.values() for c in (r.get("Certificates") or []))
 print("\n".join(doms) or "(nenhum)")
@@ -80,6 +91,7 @@ PY
 sha256sum /usr/local/sbin/openlead-firewall.sh /etc/systemd/system/openlead-firewall.service \
   /etc/ssh/sshd_config.d/00-openlead-hardening.conf > "$S/deployed/sha256.txt" 2>/dev/null
 
+find "$S" -mindepth 1 -type d -empty -delete
 tar -C "$S" -czf - .
 REMOTE
 
@@ -97,12 +109,14 @@ while read -r hash path; do
 done < "$TMP/x/deployed/sha256.txt"
 
 # 2) .env do Coolify bate com .env.coolify-instance?
+if [[ -f "$TMP/x/coolify/.env.sha256" ]]; then
 echo "== .env do Coolify x .env.coolify-instance"
 if [[ -f .env.coolify-instance ]]; then
   if [[ "$(tr -d '\r' < .env.coolify-instance | sed -e '/^[[:space:]]*$/d' | sha256sum | cut -d' ' -f1)" == "$(cat "$TMP/x/coolify/.env.sha256")" ]]
   then echo "  OK valores iguais"
   else echo "  DIFERENTE  <- copie o .env da VPS para .env.coolify-instance e rode scripts/secrets.sh encrypt"; fi
 else echo "  ?? .env.coolify-instance não está aberto (rode scripts/secrets.sh decrypt)"; fi
+fi
 rm -rf "$TMP/x/deployed" "$TMP/x/coolify/.env.sha256"
 
 # 3) Troca a foto antiga pela nova

@@ -1,0 +1,54 @@
+# iptables (IPv4)
+-P INPUT ACCEPT
+-P FORWARD DROP
+-P OUTPUT ACCEPT
+-N DOCKER
+-N DOCKER-BRIDGE
+-N DOCKER-CT
+-N DOCKER-FORWARD
+-N DOCKER-INTERNAL
+-N DOCKER-USER
+-A INPUT -i eth0 -p tcp -m multiport --dports 8000,6001,6002,8080 -j DROP
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-A DOCKER -d 10.0.1.2/32 ! -i br-6f3be6adbb8c -o br-6f3be6adbb8c -p tcp -m tcp --dport 8080 -j ACCEPT
+-A DOCKER -d 10.0.1.2/32 ! -i br-6f3be6adbb8c -o br-6f3be6adbb8c -p udp -m udp --dport 443 -j ACCEPT
+-A DOCKER -d 10.0.1.2/32 ! -i br-6f3be6adbb8c -o br-6f3be6adbb8c -p tcp -m tcp --dport 443 -j ACCEPT
+-A DOCKER -d 10.0.1.2/32 ! -i br-6f3be6adbb8c -o br-6f3be6adbb8c -p tcp -m tcp --dport 80 -j ACCEPT
+-A DOCKER ! -i br-6f3be6adbb8c -o br-6f3be6adbb8c -j DROP
+-A DOCKER ! -i docker0 -o docker0 -j DROP
+-A DOCKER-BRIDGE -o br-6f3be6adbb8c -j DOCKER
+-A DOCKER-BRIDGE -o docker0 -j DOCKER
+-A DOCKER-CT -o br-6f3be6adbb8c -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-FORWARD -j DOCKER-CT
+-A DOCKER-FORWARD -j DOCKER-INTERNAL
+-A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-FORWARD -i br-6f3be6adbb8c -j ACCEPT
+-A DOCKER-FORWARD -i docker0 -j ACCEPT
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8080 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
+
+# ip6tables (IPv6)
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT
+-N DOCKER
+-N DOCKER-BRIDGE
+-N DOCKER-CT
+-N DOCKER-FORWARD
+-N DOCKER-INTERNAL
+-N DOCKER-USER
+-A INPUT -i eth0 -p tcp -m multiport --dports 8000,6001,6002,8080 -j DROP
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-FORWARD
+-A DOCKER-FORWARD -j DOCKER-CT
+-A DOCKER-FORWARD -j DOCKER-INTERNAL
+-A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8080 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
+ufw: Status: inactive
