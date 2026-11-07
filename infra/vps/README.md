@@ -1,9 +1,28 @@
 # VPSs do openlead
 
+## Ecossistema
+
+| Projeto | O que é | Onde roda |
+|---|---|---|
+| OpenLead | O SaaS: `web` (landing + app + admin + backend, um Next.js só), `worker` (bastidor: import da Receita, exportação, e-mail, pagamentos) e `db` (Postgres com tudo, inclusive a base CNPJ) | VPS-01 |
+| OpenLead Scout | `scout`: workers que consultam o Google Maps 24 h por dia | VPS-10 (depois VPS-11, 12…) |
+| OpenLead Agent | Este repo: servidores, segurança, backups, segredos | — |
+
+Futuro: `web` + `worker` numa VPS e `db` em outra; mais VPS de Scout em paralelo. Scout e OpenLead
+vão conversar por uma rede privada entre as VPS (WireGuard), sem abrir a porta do banco.
+
+## Servidores
+
 | Nome | IP | Provedor | Papel | Config local |
 |---|---|---|---|---|
-| VPS-00 | 5.253.233.219 | Contabo | Roda o Coolify (painel https://server.openlead.app) | `.env.coolify.enc` |
-| VPS-01 | 179.197.231.251 | Hostinger | Servidor gerenciado pelo Coolify da VPS-00 (sem Coolify próprio) | `.env.vps-01.enc` |
+| VPS-00 | 5.253.233.219 | Contabo | Só o Coolify (painel https://server.openlead.app), que gerencia as outras | `.env.coolify.enc` |
+| VPS-01 | 179.197.231.251 | Hostinger | OpenLead (`web`, `worker`, `db`), gerenciado pelo Coolify da VPS-00 | `.env.vps-01.enc` |
+| VPS-10 | 164.68.96.72 | Contabo | Scout. Hoje ainda tem o OpenLead do spike; o Renan vai formatar pelo painel da Contabo | — |
+
+As chaves de host ficam em `known_hosts` (nesta pasta); o `scripts/vps.sh` recusa uma VPS cuja
+chave mudou. Depois de formatar uma VPS, grave a chave nova: `ssh-keyscan -t ed25519 <ip>`.
+
+O deploy do OpenLead no Coolify está em [`../openlead/README.md`](../openlead/README.md).
 
 As duas usam Ubuntu 26.04 e Docker 29.9.3, e recebem os mesmos arquivos abaixo.
 

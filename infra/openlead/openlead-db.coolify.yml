@@ -1,0 +1,497 @@
+# GERADO por openlead-agente/infra/openlead/render-db.sh a partir do openlead@df09892. Não edite aqui.
+# Variante SEM BACKUP (archive_mode = off, PGBACKREST_* opcionais). Ver o cabeçalho do script.
+# Gerado por `pnpm coolify:render` a partir de infra/coolify/openlead-db.yml. Não edite aqui.
+# Recurso `openlead-db` do Coolify (AD-16, AD-25, AD-26): Postgres 18.6 na VPS `contabo-openleads`.
+#
+# Este é o compose FONTE. O Coolify não lê arquivos do repositório (ele é privado), então o
+# serviço recebe a versão de `pnpm coolify:render`: cada bind de arquivo abaixo vira `content:`
+# com o texto do arquivo, que o Coolify grava na pasta do serviço. Mudou algo aqui ou em
+# infra/postgres? Renderize de novo e atualize o recurso (infra/runbooks/coolify.md).
+#
+# Sem `ports`: o Postgres só está nas redes Docker da VPS (a do recurso e a `coolify`, ligada pelo
+# Coolify). As senhas são variáveis SERVICE_PASSWORD_*, que o Coolify gera e guarda no recurso;
+# nenhuma fica no repositório.
+#
+# Imagem própria (Story 1.6): a oficial do Postgres 18.6 com o pgBackRest 2.59.3
+# (infra/postgres/Dockerfile), publicada no GHCR pelo workflow `postgres-image` com tag fixa. O
+# Coolify só constrói imagem a partir do Git; esta ele baixa como as do app. O backup: WAL contínuo
+# (archive_command do postgresql.conf) e completo/diferencial pelas tarefas agendadas do Coolify,
+# que rodam o backup.sh dentro deste container (infra/runbooks/restauracao.md). Um deploy do app
+# (`openlead-ops`, `openlead-app`) nunca toca neste recurso.
+#
+# PGBACKREST_*: repositório no bucket R2 `openlead-backup` e a chave de criptografia, variáveis do
+# recurso no Coolify (valores no gerenciador de senhas do Renan, nunca no repositório). Sem elas o
+# compose não sobe (`:?`): sem repositório, o WAL se acumula em pg_wal até encher o disco.
+services:
+  postgres:
+    image: ghcr.io/recoha/openlead-postgres:18.6-pgbackrest-2.59.3
+    restart: unless-stopped
+    # tini como PID 1: recolhe os órfãos do healthcheck (pg_isready morto por timeout). Com o Postgres
+    # como PID 1, um órfão que sai com código 2 é tratado como falha e derruba todas as conexões
+    # (aconteceu em produção em 2026-10-20 18:54 UTC, com o disco saturado pelo spike 2.1).
+    init: true
+    shm_size: 1gb
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      POSTGRES_DB: openlead
+      # Lidas pelo 20-passwords.sh, só no initdb (volume novo).
+      MIGRATOR_PASSWORD: ${SERVICE_PASSWORD_MIGRATOR}
+      IMPORTER_PASSWORD: ${SERVICE_PASSWORD_IMPORTER}
+      APP_WEB_PASSWORD: ${SERVICE_PASSWORD_APPWEB}
+      APP_WORKER_PASSWORD: ${SERVICE_PASSWORD_APPWORKER}
+      # Repositório do pgBackRest (infra/postgres/pgbackrest.conf).
+      PGBACKREST_REPO1_S3_ENDPOINT: ${PGBACKREST_REPO1_S3_ENDPOINT:-}
+      PGBACKREST_REPO1_S3_KEY: ${PGBACKREST_REPO1_S3_KEY:-}
+      PGBACKREST_REPO1_S3_KEY_SECRET: ${PGBACKREST_REPO1_S3_KEY_SECRET:-}
+      PGBACKREST_REPO1_CIPHER_PASS: ${PGBACKREST_REPO1_CIPHER_PASS:-}
+      # Só o S3 local das provas no PC muda estes (R2: 443, com verificação do certificado).
+      PGBACKREST_REPO1_STORAGE_PORT: ${PGBACKREST_REPO1_STORAGE_PORT:-443}
+      PGBACKREST_REPO1_STORAGE_VERIFY_TLS: ${PGBACKREST_REPO1_STORAGE_VERIFY_TLS:-y}
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - type: bind
+        source: ./postgresql.conf
+        target: /etc/postgresql/postgresql.conf
+        read_only: true
+        content: |
+          # Configuração do Postgres de produção (VPS Contabo `contabo-openleads`: 6 vCPU, 12 GB).
+          # Montada em /etc/postgresql/postgresql.conf pelo recurso `openlead-db` do Coolify
+          # (infra/coolify/openlead-db.yml, com o texto deste arquivo embutido por `pnpm coolify:render`).
+          # O que não está aqui fica no padrão do Postgres 18. Mudou algo? Atualize o compose no Coolify e
+          # reinicie o recurso (infra/runbooks/coolify.md).
+
+          # --- Rede e autenticação (AD-25) ---
+          # Todas as interfaces do container, que só está nas redes Docker da VPS: o compose não publica
+          # porta nenhuma, então nada de fora chega à 5432. Quem entra decide o pg_hba.conf.
+          listen_addresses = '*'
+          port = 5432
+          max_connections = 100
+          password_encryption = scram-sha-256
+          hba_file = '/etc/postgresql/pg_hba.conf'
+          # Tráfego só pela rede Docker, dentro da própria VPS: nunca passa pela internet.
+          ssl = off
+
+          # --- Memória e E/S (AD-26) ---
+          # O container tem shm_size 1 GB e limite de 6 GB (infra/coolify/openlead-db.yml); a VPS tem 12 GB
+          # e divide o resto com o app e o proxy do Coolify.
+          shared_buffers = 3GB
+          effective_cache_size = 4500MB
+          maintenance_work_mem = 512MB
+          # Orçamento dos 6 GB: 3 GB de shared_buffers + 3 autovacuum × 128 MB + work_mem das sessões + shm.
+          autovacuum_work_mem = 128MB
+          # Padrão de cada sessão; papéis com consulta pesada ganham o seu (ALTER ROLE ... SET work_mem).
+          work_mem = 16MB
+          huge_pages = try
+          io_method = worker
+          io_workers = 4
+          effective_io_concurrency = 200
+          random_page_cost = 1.1
+
+          # --- WAL e checkpoints ---
+          wal_level = replica
+          max_wal_size = 4GB
+          min_wal_size = 1GB
+          checkpoint_completion_target = 0.9
+
+          # --- Arquivamento contínuo (Story 1.6) ---
+          # Cada segmento de WAL vai para o repositório do pgBackRest (bucket R2 `openlead-backup`,
+          # infra/postgres/pgbackrest.conf), pela imagem própria (infra/postgres/Dockerfile). Com escrita no
+          # banco, o segmento fecha em no máximo um minuto: RPO bem abaixo dos 5 min. Envio que falha (bucket
+          # fora do ar, stanza ainda não criada) fica em pg_wal e o Postgres tenta de novo: nada se perde
+          # enquanto houver disco. Só o `openlead-db`, o `pnpm backup:restore` (que desliga o arquivamento)
+          # e as provas no PC montam este arquivo; o Postgres local e o da CI não arquivam.
+          archive_mode = off
+          archive_command = 'pgbackrest --stanza=openlead archive-push %p'
+          archive_timeout = 60
+
+          # --- Logs (stderr do container) ---
+          log_timezone = 'UTC'
+          log_min_duration_statement = 1000
+          log_lock_waits = on
+          log_temp_files = 0
+          log_checkpoints = on
+
+          # --- Locale ---
+          timezone = 'UTC'
+          datestyle = 'iso, mdy'
+          default_text_search_config = 'pg_catalog.simple'
+      - type: bind
+        source: ./pg_hba.conf
+        target: /etc/postgresql/pg_hba.conf
+        read_only: true
+        content: |
+          # Autenticação do Postgres de produção (AD-25). Primeira linha que casa decide.
+          # O container não publica porta: só chega à 5432 quem está numa rede Docker da VPS (a do recurso
+          # e a `coolify`, que o Coolify cria em 10.0.0.0/8 ou 172.16.0.0/12). As três faixas privadas
+          # cobrem qualquer rede Docker; endereço público nunca chega aqui.
+          #
+          # TYPE  DATABASE  USER                                    ADDRESS         METHOD
+
+          # Superusuário só pelo socket, dentro do container (docker exec -u postgres ...).
+          local   all       postgres                                              peer
+
+          # Os papéis do app só pela rede Docker, com senha SCRAM. Nenhuma outra origem entra.
+          host    openlead  migrator,importer,app_web,app_worker    10.0.0.0/8      scram-sha-256
+          host    openlead  migrator,importer,app_web,app_worker    172.16.0.0/12   scram-sha-256
+          host    openlead  migrator,importer,app_web,app_worker    192.168.0.0/16  scram-sha-256
+      # Backup: o repositório do pgBackRest e o script das tarefas agendadas do Coolify
+      # (`bash /opt/openlead/backup.sh full|diff`, no container `postgres`).
+      - type: bind
+        source: ./pgbackrest.conf
+        target: /etc/pgbackrest/pgbackrest.conf
+        read_only: true
+        content: |
+          # pgBackRest do Postgres de produção (Story 1.6, AD-27). Montado em
+          # /etc/pgbackrest/pgbackrest.conf pelo recurso `openlead-db` do Coolify
+          # (infra/coolify/openlead-db.yml) e pelo `pnpm backup:restore`. Mudou algo? Renderize o compose de
+          # novo e reinicie o recurso (infra/runbooks/coolify.md).
+          #
+          # Repositório: bucket R2 `openlead-backup` (criado e trancado por `pnpm provision:cloudflare --backup`),
+          # criptografado. Segredos e endereço vêm do ambiente do container, nunca deste arquivo:
+          #   PGBACKREST_REPO1_S3_ENDPOINT    <conta>.r2.cloudflarestorage.com
+          #   PGBACKREST_REPO1_S3_KEY         credencial S3 só desse bucket (Object Read & Write)
+          #   PGBACKREST_REPO1_S3_KEY_SECRET
+          #   PGBACKREST_REPO1_CIPHER_PASS    chave de criptografia do repositório (sem ela, nada se lê)
+          # O R2 tranca (bucket lock, 14 dias) só os prefixos gravados uma vez: `archive/openlead/1` (WAL)
+          # e `backup/openlead/backup.history/`. Por isso o repositório fica na raiz do bucket.
+
+          [global]
+          repo1-type=s3
+          repo1-path=/
+          repo1-s3-bucket=openlead-backup
+          repo1-s3-region=auto
+          repo1-s3-uri-style=path
+          repo1-cipher-type=aes-256-cbc
+
+          # PITR de 14 dias: guarda os completos dos últimos 14 dias e o último antes disso, com o WAL.
+          repo1-retention-full-type=time
+          repo1-retention-full=14
+
+          compress-type=zst
+          process-max=2
+          # Checkpoint imediato no início do backup (não espera o próximo checkpoint).
+          start-fast=y
+
+          # Saída na tela (o log da tarefa agendada do Coolify guarda); sem arquivo de log no container.
+          log-level-console=info
+          log-level-stderr=off
+          log-level-file=off
+
+          # O Postgres chama estes a cada segmento de WAL: na tela (log do container) só avisos e erros.
+          [global:archive-push]
+          log-level-console=warn
+
+          [global:archive-get]
+          log-level-console=warn
+
+          [openlead]
+          # PGDATA da imagem oficial do Postgres 18 (volume em /var/lib/postgresql).
+          pg1-path=/var/lib/postgresql/18/docker
+          pg1-socket-path=/var/run/postgresql
+      - type: bind
+        source: ./backup.sh
+        target: /opt/openlead/backup.sh
+        read_only: true
+        content: |
+          #!/usr/bin/env bash
+          # Backup do Postgres de produção pelo pgBackRest (Story 1.6, AD-27). Roda dentro do container
+          # `postgres` do recurso `openlead-db`, pelas tarefas agendadas do Coolify (UTC):
+          #   backup-full   domingo às 03:00 (0 3 * * 0)           bash /opt/openlead/backup.sh full
+          #   backup-diff   segunda a sábado às 03:00 (0 3 * * 1-6)  bash /opt/openlead/backup.sh diff
+          # (passo a passo em infra/runbooks/restauracao.md). A tarefa do Coolify entra como root
+          # (`docker exec`): o script se reexecuta como `postgres` (gosu, da imagem oficial), dono do PGDATA
+          # e o único que o `peer` do socket aceita.
+          #
+          # Idempotente, decide pelo `pgbackrest info`:
+          #   - stanza `openlead` não existe (primeira vez): cria e faz um completo;
+          #   - stanza sem nenhum backup: completo, seja qual for o pedido;
+          #   - senão, o tipo pedido.
+          # No sucesso grava tipo, label e fim do backup em `operations.backup_run`, pelo socket: é essa
+          # tabela que o worker lê para o alerta `backup:stale` (ele não roda o pgBackRest nem tem a chave).
+          # Qualquer falha sai com código diferente de 0 e não grava nada; o alerta pega o backup que não
+          # veio. A chave e a credencial vêm do ambiente do container (PGBACKREST_REPO1_*) e nunca são
+          # impressas.
+          set -euo pipefail
+
+          readonly STANZA=openlead
+          readonly DATABASE=${POSTGRES_DB:-openlead}
+
+          usage() {
+            echo 'Uso: backup.sh full|diff' >&2
+            exit 2
+          }
+          [ "$#" -eq 1 ] || usage
+          case "$1" in
+          full | diff) ;;
+          *) usage ;;
+          esac
+          readonly requested=$1
+
+          if [ "$(id -u)" -eq 0 ]; then
+            exec gosu postgres bash "${BASH_SOURCE[0]}" "$@"
+          fi
+
+          fail() {
+            printf 'backup.sh: %s\n' "$*" >&2
+            exit 1
+          }
+
+          # psql do superusuário, pelo socket. O SQL vai pelo stdin; os valores entram por variável do psql
+          # (`-v nome=...` na linha de comando, usada como `:'nome'`), nunca colados no texto do SQL.
+          psql_postgres() {
+            psql -X -q -At -v ON_ERROR_STOP=1 -d "$DATABASE" "$@"
+          }
+
+          # `pgbackrest info` em JSON. Com a chave errada, a mensagem traz os bytes do backup.info mal
+          # decifrado, que nem são texto: o `tr` deixa só ASCII imprimível.
+          repository_info() {
+            pgbackrest --stanza="$STANZA" info --output=json 2>&1 | tr -cd '\11\12\15\40-\176'
+          }
+
+          readonly CREDENTIAL_HINT='Confira a credencial (PGBACKREST_REPO1_S3_KEY, PGBACKREST_REPO1_S3_KEY_SECRET) e o endpoint (PGBACKREST_REPO1_S3_ENDPOINT).'
+
+          if ! info=$(repository_info); then
+            fail "o pgBackRest não abriu o repositório de backup (pgbackrest info). ${CREDENTIAL_HINT}
+          ${info}"
+          fi
+          if grep -qE 'FormatError|CryptoError' <<<"$info"; then
+            fail 'a chave não abre o repositório de backup: o pgBackRest não decifra o backup.info. Confira PGBACKREST_REPO1_CIPHER_PASS no gerenciador de senhas.'
+          fi
+
+          # Códigos do `info`: 0 ok, 1 stanza não existe, 2 stanza sem backup; o resto é erro.
+          if ! code=$(printf '%s\n' "select (:'info'::jsonb)->0->'status'->>'code'" |
+            psql_postgres -v info="$info" 2>/dev/null); then
+            fail "saída inesperada do pgbackrest info (o banco está no ar?):
+          ${info}"
+          fi
+
+          case "$code" in
+          0) type=$requested ;;
+          1)
+            echo "backup.sh: a stanza ${STANZA} não existe no repositório; criando (primeira vez)."
+            pgbackrest --stanza="$STANZA" stanza-create || fail 'stanza-create falhou.'
+            type=full
+            ;;
+          2)
+            echo 'backup.sh: o repositório não tem nenhum backup; fazendo um completo.'
+            type=full
+            ;;
+          *)
+            fail "o pgBackRest não abriu o repositório de backup (código ${code:-desconhecido}). ${CREDENTIAL_HINT}
+          ${info}"
+            ;;
+          esac
+
+          echo "backup.sh: backup ${type} da stanza ${STANZA}."
+          pgbackrest --stanza="$STANZA" --type="$type" backup || fail "o backup ${type} falhou."
+
+          # O backup mais novo do repositório é o que acabou de terminar (o pgBackRest não roda dois ao
+          # mesmo tempo na stanza).
+          if ! info=$(repository_info); then
+            fail "o backup terminou, mas o pgbackrest info falhou: nada gravado em operations.backup_run.
+          ${info}"
+          fi
+          recorded=$(
+            printf '%s\n' \
+              "insert into operations.backup_run (type, label, finished_at)
+                 select b->>'type', b->>'label', to_timestamp((b->'timestamp'->>'stop')::bigint)
+                   from jsonb_array_elements((:'info'::jsonb)->0->'backup') as b
+                  order by (b->'timestamp'->>'stop')::bigint desc
+                  limit 1
+               returning type || ' ' || label || ' ' || finished_at;" |
+              psql_postgres -v info="$info"
+          ) || fail 'o backup terminou, mas a gravação em operations.backup_run falhou.'
+          [ -n "$recorded" ] || fail 'o backup terminou, mas o pgbackrest info não lista nenhum backup.'
+
+          echo "backup.sh: ok, gravado em operations.backup_run: ${recorded}"
+      # Initdb (só com volume novo): papéis (o mesmo roles.sql do local e da CI) e as senhas.
+      - type: bind
+        source: ./roles.sql
+        target: /docker-entrypoint-initdb.d/10-roles.sql
+        read_only: true
+        content: |
+          -- Papéis de banco do OpenLead (AD-25), no nível do cluster. Idempotente: rodar de novo não muda nada.
+          --
+          -- Roda como superusuário, conectado ao banco do app (`current_database()`):
+          --   - local: initdb do infra/compose/local.yml (volume novo) ou `pnpm db:roles` (banco antigo);
+          --   - CI: `pnpm db:roles`, antes do `pnpm db:migrate`;
+          --   - produção: initdb do recurso `openlead-db` do Coolify (`10-roles.sql`, volume novo) ou à mão
+          --     num banco que já existe (infra/runbooks/coolify.md).
+          -- SQL puro (sem comandos do psql): roda igual no psql, no initdb e no `pg`.
+          --
+          -- O que fica aqui: os papéis, o orçamento de conexões, o dono do banco, o que o PUBLIC perde e as
+          -- extensões que só o superusuário cria (`pg_prewarm`, que o `activate` da importação usa).
+          -- O que não fica: senhas (em produção o `20-passwords.sh` define no initdb; sem senha o papel não
+          -- entra, e o local e a CI só usam os papéis para GRANT e `SET ROLE`) e os GRANT de cada schema,
+          -- que vão em migration `--custom`, porque o schema nasce lá.
+          --
+          -- Papéis (nenhum é superusuário, nenhum cria papel nem banco):
+          --   migrator   dono do banco: cria schemas e faz o DDL das migrations e do pg-boss. 5 conexões.
+          --   importer   CREATE no banco: cria os schemas versionados base_AAAAMM e busca_AAAAMM, e dá
+          --              USAGE em busca_* a quem lê (nunca em base_*). 4 conexões.
+          --   app_web    só o que as migrations derem; nunca lê base_*. 20 do pool + 3 do pg-boss = 23.
+          --   app_worker só o que as migrations derem. 15 do pool + 10 do pg-boss = 25.
+          -- Com max_connections = 100: 57 dos papéis acima, 10 reservadas ao Enriquecimento, o resto de folga.
+          --
+          -- Ao final, um NOTICE diz se algo mudou ("papéis alterados") ou não ("nada a mudar"): quem roda à
+          -- mão vê se a segunda vez não mexeu em nada.
+          DO $roles$
+          DECLARE
+            state_query constant text := $state$
+              SELECT md5(coalesce(string_agg(item, '|' ORDER BY item), ''))
+              FROM (
+                SELECT format(
+                  'role:%s:%s:%s:%s:%s:%s:%s:%s:%s',
+                  rolname, rolcanlogin, rolsuper, rolcreatedb, rolcreaterole, rolinherit,
+                  rolreplication, rolbypassrls, rolconnlimit
+                ) AS item
+                FROM pg_roles
+                WHERE rolname IN ('migrator', 'importer', 'app_web', 'app_worker')
+                UNION ALL
+                SELECT format('db:%s:%s', datdba::regrole, datacl)
+                FROM pg_database
+                WHERE datname = current_database()
+                UNION ALL
+                SELECT format('schema:%s:%s', nspowner::regrole, nspacl)
+                FROM pg_namespace
+                WHERE nspname = 'public'
+                UNION ALL
+                SELECT format('extension:%s:%s', extname, extnamespace::regnamespace)
+                FROM pg_extension
+                WHERE extname = 'pg_prewarm'
+              ) AS state
+            $state$;
+            state_before text;
+            state_after text;
+            db constant text := current_database();
+            r record;
+          BEGIN
+            EXECUTE state_query INTO state_before;
+
+            FOR r IN
+              SELECT * FROM (VALUES
+                ('migrator', 5),
+                ('importer', 4),
+                ('app_web', 23),
+                ('app_worker', 25)
+              ) AS t(name, connection_limit)
+            LOOP
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = r.name) THEN
+                EXECUTE format('CREATE ROLE %I', r.name);
+              END IF;
+              EXECUTE format(
+                'ALTER ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT NOREPLICATION NOBYPASSRLS '
+                  'CONNECTION LIMIT %s',
+                r.name, r.connection_limit
+              );
+            END LOOP;
+
+            -- O banco é do migrator: só ele cria schema (além do importer, abaixo).
+            EXECUTE format('ALTER DATABASE %I OWNER TO migrator', db);
+
+            -- PUBLIC não entra, não cria tabela temporária e não usa o schema public.
+            EXECUTE format('REVOKE ALL ON DATABASE %I FROM PUBLIC', db);
+            EXECUTE format('GRANT CONNECT ON DATABASE %I TO migrator, importer, app_web, app_worker', db);
+            EXECUTE format('GRANT CREATE ON DATABASE %I TO importer', db);
+            REVOKE ALL ON SCHEMA public FROM PUBLIC;
+
+            -- `pg_prewarm` (Story 2.6): o `activate` da importação aquece o cubo de contagem da versão nova
+            -- antes de trocar o ponteiro. Vem no contrib da imagem oficial; criar extensão pede
+            -- superusuário. Fica no `public`, e o `importer` (só ele) ganha USAGE no schema para chamar a
+            -- função (o EXECUTE dela é do PUBLIC; o aquecimento exige SELECT na tabela, que é do `importer`).
+            -- Sem o `IF NOT EXISTS` do comando: o NOTICE dele ("already exists") sujaria o do fim.
+            IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_prewarm') THEN
+              CREATE EXTENSION pg_prewarm SCHEMA public;
+            END IF;
+            GRANT USAGE ON SCHEMA public TO importer;
+
+            EXECUTE state_query INTO state_after;
+            IF state_after IS DISTINCT FROM state_before THEN
+              RAISE NOTICE 'roles.sql: papéis alterados';
+            ELSE
+              RAISE NOTICE 'roles.sql: nada a mudar';
+            END IF;
+          END
+          $roles$;
+      - type: bind
+        source: ./20-passwords.sh
+        target: /docker-entrypoint-initdb.d/20-passwords.sh
+        read_only: true
+        content: |
+          #!/usr/bin/env bash
+          # Senhas dos papéis de banco (AD-25), no initdb da imagem oficial do Postgres: o
+          # docker-entrypoint.sh roda (ou lê com `.`, se o arquivo não for executável) os arquivos de
+          # /docker-entrypoint-initdb.d/ em ordem, só quando o volume de dados é novo. Vem depois do
+          # 10-roles.sql (infra/postgres/roles.sql), que cria os papéis sem senha.
+          #
+          # As senhas vêm do ambiente do container (no Coolify, das variáveis SERVICE_PASSWORD_* do
+          # recurso `openlead-db`). Falta alguma? Para aqui e o initdb falha: nenhum papel fica sem senha
+          # por engano. O psql lê a senha do ambiente (`\getenv`, pelo stdin, nunca na linha de comando);
+          # nada é ecoado e o servidor não registra o comando, nem se ele falhar (log_statement,
+          # log_min_duration_statement e log_min_error_statement desligados na sessão).
+          #
+          # Volume que já existe não passa por aqui: para trocar uma senha, infra/runbooks/coolify.md.
+
+          openlead_set_role_passwords() {
+            local pair role variable missing=''
+            local -r pairs='migrator:MIGRATOR_PASSWORD importer:IMPORTER_PASSWORD app_web:APP_WEB_PASSWORD app_worker:APP_WORKER_PASSWORD'
+
+            for pair in $pairs; do
+              variable=${pair#*:}
+              if [ -z "${!variable:-}" ]; then
+                missing="$missing $variable"
+              fi
+            done
+            if [ -n "$missing" ]; then
+              echo "20-passwords.sh: faltam as variáveis${missing}. Defina as senhas dos papéis e recrie o volume de dados." >&2
+              return 1
+            fi
+
+            for pair in $pairs; do
+              role=${pair%%:*}
+              variable=${pair#*:}
+              printf '%s\n' \
+                "\\getenv pw ${variable}" \
+                "SET log_statement = 'none';" \
+                'SET log_min_duration_statement = -1;' \
+                'SET log_min_error_statement = panic;' \
+                "ALTER ROLE ${role} PASSWORD :'pw';" |
+                psql -X -q -v ON_ERROR_STOP=1 \
+                  --username "${POSTGRES_USER:-postgres}" --no-password \
+                  --dbname "${POSTGRES_DB:-openlead}" ||
+                return 1
+              echo "20-passwords.sh: senha definida para ${role}"
+            done
+          }
+
+          # `exit` e não `return`: lido com `.`, também derruba o entrypoint (o initdb não termina).
+          openlead_set_role_passwords || exit 1
+          unset -f openlead_set_role_passwords
+    healthcheck:
+      # Pronto pelo socket E com a 5432 aberta por TCP: durante o initdb o servidor temporário só
+      # abre o socket. O pg_isready roda como o usuário `postgres` (gosu, da imagem oficial), que é
+      # o único que o `peer` do socket aceita; a porta é testada sem login (conexão sem pacote de
+      # início não vai ao log). Assim o healthcheck, a cada 5 s, não põe nenhum FATAL no log.
+      test: ["CMD-SHELL", "gosu postgres pg_isready -q -d openlead && bash -c '</dev/tcp/127.0.0.1/5432'"]
+      interval: 5s
+      # 3 s era pouco com o disco ocupado (índice grande, VACUUM, backup).
+      timeout: 10s
+      retries: 12
+      start_period: 60s
+    stop_grace_period: 60s
+    # Sem limite, o log do container cresce até encher o disco.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 6g
+
+volumes:
+  postgres-data:

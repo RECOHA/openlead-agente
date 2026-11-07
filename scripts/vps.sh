@@ -19,4 +19,7 @@ else
   HOST="$COOLIFY_SERVER_IP"; SSH_USER="$COOLIFY_SERVER_SSH_USER"; KEY="$COOLIFY_SERVER_SSH_KEY_FILE"
 fi
 
-exec ssh -i "$KEY" -o IdentitiesOnly=yes "${SSH_USER}@${HOST}" "$@"
+# Chave de host fixada no repo: se a VPS trocar de chave, o SSH recusa.
+exec ssh -i "$KEY" -o IdentitiesOnly=yes \
+  -o UserKnownHostsFile=infra/vps/known_hosts -o StrictHostKeyChecking=yes \
+  "${SSH_USER}@${HOST}" "$@"

@@ -1,0 +1,6 @@
+# Chaves de host das VPS (scripts/vps.sh confere contra este arquivo).
+# Gravadas em 2026-11-07 por ssh-keyscan (primeiro contato).
+# 179.197.231.251:22 SSH-2.0-OpenSSH_10.2p1 Ubuntu-2ubuntu3.8
+# 5.253.233.219:22 SSH-2.0-OpenSSH_10.2p1 Ubuntu-2ubuntu3.8
+179.197.231.251 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPVpB4dFhnlUIeVtQTve6hrdJBowe6176LZ2lyLY9poV
+5.253.233.219 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICWx0L2tnN45XaCawdzWUKCmXlAIVauiIYpGjhK7PPVU
