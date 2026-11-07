@@ -55,5 +55,5 @@ Tokens da API (`.env.coolify`): `COOLIFY_API_TOKEN` (id 1, `root`, só aqui) e `
 - [ ] `ALERT_EMAIL` + `EMAIL_FROM` (juntos; vazios também no spike). Sem eles os alertas ficam só no painel, sem e-mail.
 - [x] Primeiro deploy (2026-11-07, SHA `df09892`): `https://openlead.app/api/health` ok, vindo da VPS-01.
 - [x] Import da Receita 202610: 15:31 → 17:21 UTC de 2026-11-07 (download 11 min, carga 50 min, projeção ~45 min). 28.380.653 empresas ativas; versão com ~53 GB (base 32 + busca 20).
-- [ ] **Disco do próximo import**: o preflight exige 1,5 × versão ativa + 60 GB (~138 GB livres) e há ~125 GB. Sem mudança, o import de 202611 para com `registry:disk_space` (a Base no ar não muda). Opções: disco maior na VPS-01 ou apagar o `base_*` bruto depois de ativar (mudança no OpenLead).
+- [ ] **Disco do próximo import**: decisão do Renan (2026-11-07): uma versão só, sem volta para a Base anterior. PR https://github.com/RECOHA/openlead/pull/1 apaga os brutos (`base_*`, zips) depois de cada troca; depois do merge, a primeira madrugada libera ~39 GB na VPS-01 e o preflight passa a exigir ~90 GB.
 - [ ] Backup no S3 da Contabo (depois).
