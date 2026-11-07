@@ -32,8 +32,25 @@ Recursos: VPS-01 tem 4 CPUs e 15 GB. Os limites dos composes do OpenLead (banco 
 4. GitHub (`recoha/openlead`, environment `production`): `COOLIFY_URL`, `COOLIFY_TOKEN` (só `read` + `deploy`), `COOLIFY_OPS_UUID`, `COOLIFY_APP_UUID`; variável `DEPLOY_ENABLED=true`; rodar o workflow `deploy`.
 5. `node apps/worker/src/registry-cli.ts start` no terminal do `worker` e acompanhar com `status` (~6 h ou mais).
 
+## No Coolify (VPS-00)
+
+| O quê | UUID |
+|---|---|
+| Projeto `OpenLead` | `sxrbnltosxl5fts86pkolkfk` (ambiente `production`) |
+| Servidor VPS-01 | `j712k7ybasymkytynpnt001k` (registry `ghcr.io` logado como `RECOHA`) |
+| `openlead-db` | `ywco8vhh6fnefyedbaqw2ak5` (container `postgres-ywco8vhh6fnefyedbaqw2ak5`) |
+| `openlead-ops` | `vadwerrxhzbfdlm7znomjeq9` |
+| `openlead-app` | `v47eozls3yfsq7f8cvng3wlf` (domínio `https://openlead.app` no `web`; a porta 3000 vem do `EXPOSE` da imagem) |
+
+Tokens da API (`.env.coolify`): `COOLIFY_API_TOKEN` (id 1, `root`, só aqui) e `COOLIFY_CI_TOKEN`
+(id 2, `read` + `deploy`, segredo `COOLIFY_TOKEN` do GitHub).
+
 ## Pendências
 
-- [ ] Token da API do Coolify (o Renan cria no painel: Keys & Tokens). A API está desligada.
-- [ ] Preencher no `.env.openlead`: `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `ALERT_EMAIL`, `EXPORTS_S3_*`.
+- [x] Token da API do Coolify.
+- [x] `openlead-db` no ar; senhas em `.env.openlead`.
+- [x] `openlead-ops` e `openlead-app` criados; URLs de banco, Better Auth e `ACCOUNT_EMAIL_FROM` preenchidas.
+- [x] Segredos do environment `production` no GitHub apontando para o Coolify novo.
+- [ ] Preencher no `.env.openlead` e no `openlead-app`: `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY` (sem eles o app não sobe); `ALERT_EMAIL` + `EMAIL_FROM` (juntos); `EXPORTS_S3_*` (todas ou nenhuma).
+- [ ] Primeiro deploy (`gh workflow run deploy -R recoha/openlead --ref main -f sha=<sha>`) e import da Receita.
 - [ ] Backup no S3 da Contabo (depois).
