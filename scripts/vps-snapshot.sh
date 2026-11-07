@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tira uma "foto" da VPS e salva em infra/vps/ (só LEITURA: não muda nada lá).
 #   scripts/vps-snapshot.sh          VPS-00 (Coolify)  -> infra/vps/snapshot/
-#   scripts/vps-snapshot.sh vps-01   VPS-01 (servidor) -> infra/vps/snapshot-vps-01/
+#   scripts/vps-snapshot.sh vps-NN   VPS-NN (servidor) -> infra/vps/snapshot-vps-NN/  (ex.: vps-01, vps-10)
 # Depois veja o que mudou com: git diff infra/vps
 # Segredos NUNCA vêm em texto puro: dos .env só vêm os nomes das variáveis;
 # acme.json (certificados) e chaves SSH não são copiados.
@@ -12,8 +12,8 @@ cd "$(git rev-parse --show-toplevel)"
 TARGET="${1:-vps-00}"
 case "$TARGET" in
   vps-00) OUT=infra/vps/snapshot ;;
-  vps-01) OUT=infra/vps/snapshot-vps-01 ;;
-  *) echo "uso: $0 [vps-00|vps-01]" >&2; exit 1 ;;
+  vps-[0-9]*) OUT=infra/vps/snapshot-$TARGET ;;
+  *) echo "uso: $0 [vps-00|vps-NN]" >&2; exit 1 ;;
 esac
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT

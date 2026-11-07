@@ -1,19 +1,25 @@
 ## servers
 id	name	ip	user	port
-0	VPS-00	host.docker.internal	root	22
-1	VPS-01	179.197.231.251	root	22
+0	VPS-00 - Contabo Coolify	host.docker.internal	root	22
+1	VPS-01 - Hostinger OpenLead	179.197.231.251	root	22
+2	VPS-10 - Contabo Scout	164.68.96.72	root	22
 
 ## projects
 id	name
+1	OpenLead
 
 ## environments
 id	name	project_id
+1	production	1
 
 ## applications
 uuid	name	fqdn	git_repository	git_branch	build_pack	environment_id
 
 ## services
 uuid	name	environment_id
+ywco8vhh6fnefyedbaqw2ak5	openlead-db	1
+vadwerrxhzbfdlm7znomjeq9	openlead-ops	1
+v47eozls3yfsq7f8cvng3wlf	openlead-app	1
 
 ## databases
 

@@ -1,0 +1,4 @@
+bridge	bridge
+coolify	bridge
+host	host
+none	null

@@ -17,14 +17,14 @@ vão conversar por uma rede privada entre as VPS (WireGuard), sem abrir a porta 
 |---|---|---|---|---|
 | VPS-00 | 5.253.233.219 | Contabo | Só o Coolify (painel https://server.openlead.app), que gerencia as outras | `.env.coolify.enc` |
 | VPS-01 | 179.197.231.251 | Hostinger | OpenLead (`web`, `worker`, `db`), gerenciado pelo Coolify da VPS-00 | `.env.vps-01.enc` |
-| VPS-10 | 164.68.96.72 | Contabo | Scout. Hoje ainda tem o OpenLead do spike; o Renan vai formatar pelo painel da Contabo | — |
+| VPS-10 | 164.68.96.72 | Contabo | Scout (6 vCPU, 11 GB). Formatada em 2026-11-07, montada como a VPS-01, no Coolify sem proxy (não recebe tráfego da internet; só a 22 aberta) | `.env.vps-10.enc` (tem a senha de root, para o console da Contabo) |
 
 As chaves de host ficam em `known_hosts` (nesta pasta); o `scripts/vps.sh` recusa uma VPS cuja
 chave mudou. Depois de formatar uma VPS, grave a chave nova: `ssh-keyscan -t ed25519 <ip>`.
 
 O deploy do OpenLead no Coolify está em [`../openlead/README.md`](../openlead/README.md).
 
-As duas usam Ubuntu 26.04 e Docker 29.9.3, e recebem os mesmos arquivos abaixo.
+Todas usam Ubuntu 26.04 e Docker 29.9.3, e recebem os mesmos arquivos abaixo.
 
 | Arquivo | Destino na VPS | Função |
 |---|---|---|
@@ -40,7 +40,7 @@ Painel: https://server.openlead.app (credenciais em `.env.coolify.enc`).
 ```bash
 scripts/secrets.sh decrypt        # se os segredos ainda não estiverem abertos
 scripts/vps.sh                    # shell na VPS-00
-scripts/vps.sh vps-01 'docker ps' # comando na VPS-01
+scripts/vps.sh vps-01 'docker ps' # comando na VPS-01 (vale para qualquer vps-NN)
 ```
 
 `root` de cada VPS aceita duas chaves:
