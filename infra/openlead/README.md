@@ -54,5 +54,6 @@ Tokens da API (`.env.coolify`): `COOLIFY_API_TOKEN` (id 1, `root`, só aqui) e `
 - [x] Turnstile, Resend e `EXPORTS_S3_*` (Contabo `usc1`, bucket `openlead-exports`) copiados dos containers do spike na VPS-10.
 - [ ] `ALERT_EMAIL` + `EMAIL_FROM` (juntos; vazios também no spike). Sem eles os alertas ficam só no painel, sem e-mail.
 - [x] Primeiro deploy (2026-11-07, SHA `df09892`): `https://openlead.app/api/health` ok, vindo da VPS-01.
-- [ ] Import da Receita (202610) começou às 15:31 UTC de 2026-11-07; download a ~87 Mbit/s.
+- [x] Import da Receita 202610: 15:31 → 17:21 UTC de 2026-11-07 (download 11 min, carga 50 min, projeção ~45 min). 28.380.653 empresas ativas; versão com ~53 GB (base 32 + busca 20).
+- [ ] **Disco do próximo import**: o preflight exige 1,5 × versão ativa + 60 GB (~138 GB livres) e há ~125 GB. Sem mudança, o import de 202611 para com `registry:disk_space` (a Base no ar não muda). Opções: disco maior na VPS-01 ou apagar o `base_*` bruto depois de ativar (mudança no OpenLead).
 - [ ] Backup no S3 da Contabo (depois).
