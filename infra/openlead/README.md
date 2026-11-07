@@ -51,6 +51,8 @@ Tokens da API (`.env.coolify`): `COOLIFY_API_TOKEN` (id 1, `root`, só aqui) e `
 - [x] `openlead-db` no ar; senhas em `.env.openlead`.
 - [x] `openlead-ops` e `openlead-app` criados; URLs de banco, Better Auth e `ACCOUNT_EMAIL_FROM` preenchidas.
 - [x] Segredos do environment `production` no GitHub apontando para o Coolify novo.
-- [ ] Preencher no `.env.openlead` e no `openlead-app`: `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY` (sem eles o app não sobe); `ALERT_EMAIL` + `EMAIL_FROM` (juntos); `EXPORTS_S3_*` (todas ou nenhuma).
-- [ ] Primeiro deploy (`gh workflow run deploy -R recoha/openlead --ref main -f sha=<sha>`) e import da Receita.
+- [x] Turnstile, Resend e `EXPORTS_S3_*` (Contabo `usc1`, bucket `openlead-exports`) copiados dos containers do spike na VPS-10.
+- [ ] `ALERT_EMAIL` + `EMAIL_FROM` (juntos; vazios também no spike). Sem eles os alertas ficam só no painel, sem e-mail.
+- [x] Primeiro deploy (2026-11-07, SHA `df09892`): `https://openlead.app/api/health` ok, vindo da VPS-01.
+- [ ] Import da Receita (202610) começou às 15:31 UTC de 2026-11-07; download a ~87 Mbit/s.
 - [ ] Backup no S3 da Contabo (depois).
