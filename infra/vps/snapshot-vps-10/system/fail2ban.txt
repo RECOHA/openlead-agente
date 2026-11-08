@@ -1,4 +1,7 @@
 fail2ban: active
-|  |- Total failed:	10
-|  `- Journal matches:	_SYSTEMD_UNIT=ssh.service + _COMM=sshd
-   |- Total banned:	0
+jails: sshd
+sshd bantime: 3600
+sshd findtime: 600
+sshd maxretry: 5
+sshd ignoreip: These IP addresses/networks are ignored: |- 127.0.0.0/8 |- 10.0.0.0/8 |- 172.16.0.0/12 |- ::1 `- 5.253.233.219
+sshd journalmatch: Current match filter: _SYSTEMD_UNIT=ssh.service + _COMM=sshd

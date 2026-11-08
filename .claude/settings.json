@@ -6,7 +6,32 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:/Users/renan.hagiwara/AppData/Roaming/uv/tools/bmad-loop/Scripts/bmad-loop.exe relay SessionStart"
+            "command": "bmad-loop relay SessionStart"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/scripts/hooks/claude_gate.py\"",
+            "timeout": 10,
+            "statusMessage": "Conferindo se o comando precisa da sua liberação..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/scripts/hooks/claude_drift.py\" mark",
+            "timeout": 30
           }
         ]
       }
@@ -16,7 +41,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:/Users/renan.hagiwara/AppData/Roaming/uv/tools/bmad-loop/Scripts/bmad-loop.exe relay Stop"
+            "command": "bmad-loop relay Stop"
+          },
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/scripts/hooks/claude_drift.py\" stop",
+            "timeout": 900,
+            "statusMessage": "Conferindo se o repo está igual às VPS..."
           }
         ]
       }
@@ -26,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:/Users/renan.hagiwara/AppData/Roaming/uv/tools/bmad-loop/Scripts/bmad-loop.exe relay SessionEnd"
+            "command": "bmad-loop relay SessionEnd"
           }
         ]
       }
@@ -36,7 +67,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:/Users/renan.hagiwara/AppData/Roaming/uv/tools/bmad-loop/Scripts/bmad-loop.exe relay PreCompact"
+            "command": "bmad-loop relay PreCompact"
           }
         ]
       }
@@ -46,7 +77,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:/Users/renan.hagiwara/AppData/Roaming/uv/tools/bmad-loop/Scripts/bmad-loop.exe relay Notification"
+            "command": "bmad-loop relay Notification"
           }
         ]
       }

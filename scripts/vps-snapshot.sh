@@ -38,7 +38,10 @@ systemctl list-unit-files --state=enabled --no-legend | awk '{print $1}' | sort 
 ss -H -tulpn | awk '{split($7,p,"\""); print $1, $5, p[2]}' | sort -u > "$S/system/listening-ports.txt"
 { echo "# iptables (IPv4)"; iptables -S; echo; echo "# ip6tables (IPv6)"; ip6tables -S; } > "$S/system/firewall.txt"
 ufw status verbose > "$S/system/ufw.txt" 2>&1
-{ echo "fail2ban: $(systemctl is-active fail2ban 2>&1)"; fail2ban-client status sshd 2>&1 | grep -E 'Journal|Total'; } > "$S/system/fail2ban.txt"
+# Só a config efetiva: os contadores (falhas, banidos) mudam toda hora com os robôs e não entram na foto.
+{ echo "fail2ban: $(systemctl is-active fail2ban 2>&1)"; echo "jails: $(fail2ban-client status 2>&1 | sed -n 's/.*Jail list:[[:space:]]*//p')"
+  for k in bantime findtime maxretry ignoreip journalmatch; do echo "sshd $k: $(fail2ban-client get sshd $k 2>&1 | tr '\n' ' ' | sed 's/[[:space:]]*$//')"; done
+} > "$S/system/fail2ban.txt"
 sshd -T 2>/dev/null | sort > "$S/system/sshd-effective.txt"
 for f in /etc/ssh/sshd_config.d/*.conf; do echo "### $f"; cat "$f"; echo; done > "$S/system/sshd_config.d.txt"
 for f in /etc/sysctl.d/*.conf; do echo "### $f"; grep -vE '^\s*(#|$)' "$f"; echo; done > "$S/system/sysctl.d.txt"

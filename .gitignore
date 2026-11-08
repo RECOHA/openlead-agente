@@ -14,3 +14,6 @@ secrets/*
 # Chaves privadas do age (nunca versionar)
 keys.txt
 *.agekey
+
+# Anotações do hook do Claude Code (scripts/hooks/claude_drift.py): VPS tocadas em cada sessão
+.claude/drift/

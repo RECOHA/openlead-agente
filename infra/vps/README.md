@@ -120,6 +120,16 @@ O script também avisa se os arquivos acima, ou o `.env` do Coolify, estão dife
 Nunca entram na foto: valores do `.env`, `acme.json` (chaves dos certificados) e chaves SSH.
 Os valores do `.env` do Coolify ficam em `.env.coolify-instance.enc`.
 
+## Travas do Claude (hooks)
+
+Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
+
+| Hook | Quando | O que faz |
+|---|---|---|
+| `scripts/hooks/claude_gate.py` | Antes de cada comando | Pede a sua liberação para SSH (`vps.sh`, `vps-apply.sh`, `ssh`...), escrita na API do Coolify ou por HTTP, cofre (`secrets.sh`, `sops`, `age -d`), `git push` e escrita pelo `gh`. No modo auto ele não pergunta (quem decide é o classificador do modo auto) |
+| `scripts/hooks/claude_drift.py mark` | Depois de cada comando | Anota quais VPS foram tocadas (em `.claude/drift/`, fora do git) |
+| `scripts/hooks/claude_drift.py stop` | No fim de cada resposta | Tira a foto das VPS tocadas. Se um arquivo instalado não bate com `infra/vps/` ou se a foto mudou sem ir para o git, não deixa o Claude terminar (uma vez) até trazer a mudança para o repo |
+
 ## Histórico
 
 - **2026-11-08 03:05–03:16 UTC** (pedido do Renan, depois do estudo com o agent-global), nas 3 VPS:
@@ -132,3 +142,7 @@ Os valores do `.env` do Coolify ficam em `.env.coolify-instance.enc`.
   `vps-snapshot.sh` com todos os arquivos `OK`.
   Atenção: com `MaxAuthTries 3`, um `ssh` à mão com muitas chaves no agente pode ser recusado antes de
   chegar na certa. Use `-o IdentitiesOnly=yes -i <chave>` (o `scripts/vps.sh` já faz isso).
+- **2026-11-08 ~03:40 UTC**: travas do Claude (hooks `claude_gate.py` e `claude_drift.py`, ver acima). Hooks
+  do bmad-loop com o caminho certo (`bmad-loop`, do PATH; antes apontavam para `C:/Users/renan.hagiwara/`, que
+  não existe neste PC, e falhavam calados). A foto do fail2ban guarda só a config (sem contadores). Visto no
+  teste: o fail2ban da VPS-10 já tinha banido 5 IPs na primeira meia hora.
