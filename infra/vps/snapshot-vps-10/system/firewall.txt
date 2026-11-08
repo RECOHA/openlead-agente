@@ -1,5 +1,5 @@
 # iptables (IPv4)
--P INPUT ACCEPT
+-P INPUT DROP
 -P FORWARD DROP
 -P OUTPUT ACCEPT
 -N DOCKER
@@ -8,10 +8,59 @@
 -N DOCKER-FORWARD
 -N DOCKER-INTERNAL
 -N DOCKER-USER
+-N ufw-after-forward
+-N ufw-after-input
+-N ufw-after-logging-forward
+-N ufw-after-logging-input
+-N ufw-after-logging-output
+-N ufw-after-output
+-N ufw-before-forward
+-N ufw-before-input
+-N ufw-before-logging-forward
+-N ufw-before-logging-input
+-N ufw-before-logging-output
+-N ufw-before-output
+-N ufw-logging-allow
+-N ufw-logging-deny
+-N ufw-not-local
+-N ufw-reject-forward
+-N ufw-reject-input
+-N ufw-reject-output
+-N ufw-skip-to-policy-forward
+-N ufw-skip-to-policy-input
+-N ufw-skip-to-policy-output
+-N ufw-track-forward
+-N ufw-track-input
+-N ufw-track-output
+-N ufw-user-forward
+-N ufw-user-input
+-N ufw-user-limit
+-N ufw-user-limit-accept
+-N ufw-user-logging-forward
+-N ufw-user-logging-input
+-N ufw-user-logging-output
+-N ufw-user-output
 -A INPUT -i eth0 -p tcp -m multiport --dports 8000,6001,6002,8080 -j DROP
+-A INPUT -j ufw-before-logging-input
+-A INPUT -j ufw-before-input
+-A INPUT -j ufw-after-input
+-A INPUT -j ufw-after-logging-input
+-A INPUT -j ufw-reject-input
+-A INPUT -j ufw-track-input
 -A FORWARD -j DOCKER-USER
 -A FORWARD -j DOCKER-FORWARD
--A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p tcp -m tcp --dport 8080 -j ACCEPT
+-A FORWARD -j ufw-before-logging-forward
+-A FORWARD -j ufw-before-forward
+-A FORWARD -j ufw-after-forward
+-A FORWARD -j ufw-after-logging-forward
+-A FORWARD -j ufw-reject-forward
+-A FORWARD -j ufw-track-forward
+-A OUTPUT -j ufw-before-logging-output
+-A OUTPUT -j ufw-before-output
+-A OUTPUT -j ufw-after-output
+-A OUTPUT -j ufw-after-logging-output
+-A OUTPUT -j ufw-reject-output
+-A OUTPUT -j ufw-track-output
 -A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p udp -m udp --dport 443 -j ACCEPT
 -A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p tcp -m tcp --dport 443 -j ACCEPT
 -A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p tcp -m tcp --dport 80 -j ACCEPT
@@ -30,10 +79,61 @@
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
+-A ufw-after-input -p udp -m udp --dport 137 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 138 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 139 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 445 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 67 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 68 -j ufw-skip-to-policy-input
+-A ufw-after-input -m addrtype --dst-type BROADCAST -j ufw-skip-to-policy-input
+-A ufw-after-logging-forward -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw-after-logging-input -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 8 -j ACCEPT
+-A ufw-before-forward -j ufw-user-forward
+-A ufw-before-input -i lo -j ACCEPT
+-A ufw-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-input -m conntrack --ctstate INVALID -j ufw-logging-deny
+-A ufw-before-input -m conntrack --ctstate INVALID -j DROP
+-A ufw-before-input -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 8 -j ACCEPT
+-A ufw-before-input -p udp -m udp --sport 67 --dport 68 -j ACCEPT
+-A ufw-before-input -j ufw-not-local
+-A ufw-before-input -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT
+-A ufw-before-input -d 239.255.255.250/32 -p udp -m udp --dport 1900 -j ACCEPT
+-A ufw-before-input -j ufw-user-input
+-A ufw-before-output -o lo -j ACCEPT
+-A ufw-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-output -j ufw-user-output
+-A ufw-logging-allow -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW ALLOW] "
+-A ufw-logging-deny -m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-A ufw-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw-not-local -m addrtype --dst-type LOCAL -j RETURN
+-A ufw-not-local -m addrtype --dst-type MULTICAST -j RETURN
+-A ufw-not-local -m addrtype --dst-type BROADCAST -j RETURN
+-A ufw-not-local -m limit --limit 3/min --limit-burst 10 -j ufw-logging-deny
+-A ufw-not-local -j DROP
+-A ufw-skip-to-policy-forward -j DROP
+-A ufw-skip-to-policy-input -j DROP
+-A ufw-skip-to-policy-output -j ACCEPT
+-A ufw-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw-user-input -p tcp -m tcp --dport 22 -j ACCEPT
+-A ufw-user-input -p tcp -m tcp --dport 80 -j ACCEPT
+-A ufw-user-input -p tcp -m tcp --dport 443 -j ACCEPT
+-A ufw-user-input -p udp -m udp --dport 443 -j ACCEPT
+-A ufw-user-limit -m limit --limit 3/min -j LOG --log-prefix "[UFW LIMIT BLOCK] "
+-A ufw-user-limit -j REJECT --reject-with icmp-port-unreachable
+-A ufw-user-limit-accept -j ACCEPT
 
 # ip6tables (IPv6)
--P INPUT ACCEPT
--P FORWARD ACCEPT
+-P INPUT DROP
+-P FORWARD DROP
 -P OUTPUT ACCEPT
 -N DOCKER
 -N DOCKER-BRIDGE
@@ -41,9 +141,58 @@
 -N DOCKER-FORWARD
 -N DOCKER-INTERNAL
 -N DOCKER-USER
+-N ufw6-after-forward
+-N ufw6-after-input
+-N ufw6-after-logging-forward
+-N ufw6-after-logging-input
+-N ufw6-after-logging-output
+-N ufw6-after-output
+-N ufw6-before-forward
+-N ufw6-before-input
+-N ufw6-before-logging-forward
+-N ufw6-before-logging-input
+-N ufw6-before-logging-output
+-N ufw6-before-output
+-N ufw6-logging-allow
+-N ufw6-logging-deny
+-N ufw6-reject-forward
+-N ufw6-reject-input
+-N ufw6-reject-output
+-N ufw6-skip-to-policy-forward
+-N ufw6-skip-to-policy-input
+-N ufw6-skip-to-policy-output
+-N ufw6-track-forward
+-N ufw6-track-input
+-N ufw6-track-output
+-N ufw6-user-forward
+-N ufw6-user-input
+-N ufw6-user-limit
+-N ufw6-user-limit-accept
+-N ufw6-user-logging-forward
+-N ufw6-user-logging-input
+-N ufw6-user-logging-output
+-N ufw6-user-output
 -A INPUT -i eth0 -p tcp -m multiport --dports 8000,6001,6002,8080 -j DROP
+-A INPUT -j ufw6-before-logging-input
+-A INPUT -j ufw6-before-input
+-A INPUT -j ufw6-after-input
+-A INPUT -j ufw6-after-logging-input
+-A INPUT -j ufw6-reject-input
+-A INPUT -j ufw6-track-input
 -A FORWARD -j DOCKER-USER
 -A FORWARD -j DOCKER-FORWARD
+-A FORWARD -j ufw6-before-logging-forward
+-A FORWARD -j ufw6-before-forward
+-A FORWARD -j ufw6-after-forward
+-A FORWARD -j ufw6-after-logging-forward
+-A FORWARD -j ufw6-reject-forward
+-A FORWARD -j ufw6-track-forward
+-A OUTPUT -j ufw6-before-logging-output
+-A OUTPUT -j ufw6-before-output
+-A OUTPUT -j ufw6-after-output
+-A OUTPUT -j ufw6-after-logging-output
+-A OUTPUT -j ufw6-reject-output
+-A OUTPUT -j ufw6-track-output
 -A DOCKER-FORWARD -j DOCKER-CT
 -A DOCKER-FORWARD -j DOCKER-INTERNAL
 -A DOCKER-FORWARD -j DOCKER-BRIDGE
@@ -51,4 +200,94 @@
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
-ufw: Status: inactive
+-A ufw6-after-input -p udp -m udp --dport 137 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p udp -m udp --dport 138 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p tcp -m tcp --dport 139 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p tcp -m tcp --dport 445 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p udp -m udp --dport 546 -j ufw6-skip-to-policy-input
+-A ufw6-after-input -p udp -m udp --dport 547 -j ufw6-skip-to-policy-input
+-A ufw6-after-logging-forward -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw6-after-logging-input -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw6-before-forward -m rt --rt-type 0 -j DROP
+-A ufw6-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-A ufw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A ufw6-before-forward -j ufw6-user-forward
+-A ufw6-before-input -i lo -j ACCEPT
+-A ufw6-before-input -m rt --rt-type 0 -j DROP
+-A ufw6-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A ufw6-before-input -m conntrack --ctstate INVALID -j ufw6-logging-deny
+-A ufw6-before-input -m conntrack --ctstate INVALID -j DROP
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 144 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 145 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 146 -j ACCEPT
+-A ufw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 147 -j ACCEPT
+-A ufw6-before-input -s fe80::/10 -d fe80::/10 -p udp -m udp --sport 547 --dport 546 -j ACCEPT
+-A ufw6-before-input -d ff02::fb/128 -p udp -m udp --dport 5353 -j ACCEPT
+-A ufw6-before-input -d ff02::f/128 -p udp -m udp --dport 1900 -j ACCEPT
+-A ufw6-before-input -j ufw6-user-input
+-A ufw6-before-output -o lo -j ACCEPT
+-A ufw6-before-output -m rt --rt-type 0 -j DROP
+-A ufw6-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 130 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 131 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 132 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 143 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 151 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 152 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-output -s fe80::/10 -p ipv6-icmp -m icmp6 --icmpv6-type 153 -m hl --hl-eq 1 -j ACCEPT
+-A ufw6-before-output -j ufw6-user-output
+-A ufw6-logging-allow -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW ALLOW] "
+-A ufw6-logging-deny -m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-A ufw6-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw6-skip-to-policy-forward -j DROP
+-A ufw6-skip-to-policy-input -j DROP
+-A ufw6-skip-to-policy-output -j ACCEPT
+-A ufw6-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw6-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw6-user-input -p tcp -m tcp --dport 22 -j ACCEPT
+-A ufw6-user-input -p tcp -m tcp --dport 80 -j ACCEPT
+-A ufw6-user-input -p tcp -m tcp --dport 443 -j ACCEPT
+-A ufw6-user-input -p udp -m udp --dport 443 -j ACCEPT
+-A ufw6-user-limit -m limit --limit 3/min -j LOG --log-prefix "[UFW LIMIT BLOCK] "
+-A ufw6-user-limit -j REJECT --reject-with icmp6-port-unreachable
+-A ufw6-user-limit-accept -j ACCEPT

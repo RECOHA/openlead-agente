@@ -37,7 +37,8 @@ apt-mark showmanual | sort > "$S/system/packages-manual.txt"
 systemctl list-unit-files --state=enabled --no-legend | awk '{print $1}' | sort > "$S/system/systemd-enabled.txt"
 ss -H -tulpn | awk '{split($7,p,"\""); print $1, $5, p[2]}' | sort -u > "$S/system/listening-ports.txt"
 { echo "# iptables (IPv4)"; iptables -S; echo; echo "# ip6tables (IPv6)"; ip6tables -S; } > "$S/system/firewall.txt"
-echo "ufw: $(ufw status | head -1)" >> "$S/system/firewall.txt"
+ufw status verbose > "$S/system/ufw.txt" 2>&1
+{ echo "fail2ban: $(systemctl is-active fail2ban 2>&1)"; fail2ban-client status sshd 2>&1 | grep -E 'Journal|Total'; } > "$S/system/fail2ban.txt"
 sshd -T 2>/dev/null | sort > "$S/system/sshd-effective.txt"
 for f in /etc/ssh/sshd_config.d/*.conf; do echo "### $f"; cat "$f"; echo; done > "$S/system/sshd_config.d.txt"
 for f in /etc/sysctl.d/*.conf; do echo "### $f"; grep -vE '^\s*(#|$)' "$f"; echo; done > "$S/system/sysctl.d.txt"
@@ -89,7 +90,9 @@ PY
 
 # Hash dos arquivos que nós instalamos (para comparar com infra/vps/)
 sha256sum /usr/local/sbin/openlead-firewall.sh /etc/systemd/system/openlead-firewall.service \
-  /etc/ssh/sshd_config.d/00-openlead-hardening.conf > "$S/deployed/sha256.txt" 2>/dev/null
+  /etc/ssh/sshd_config.d/00-openlead-hardening.conf /etc/fail2ban/jail.d/openlead.local \
+  /etc/docker/daemon.json /data/coolify/proxy/dynamic/security-headers.yaml \
+  /data/coolify/source/docker-compose.custom.yml > "$S/deployed/sha256.txt" 2>/dev/null
 
 find "$S" -mindepth 1 -type d -empty -delete
 tar -C "$S" -czf - .

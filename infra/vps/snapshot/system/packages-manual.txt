@@ -15,6 +15,7 @@ docker-ce-rootless-extras
 docker-compose-plugin
 docker-model-plugin
 eatmydata
+fail2ban
 fdisk
 findutils
 gdisk

@@ -1,0 +1,11 @@
+# Gerenciado pelo openlead-agente (/data/coolify/source/docker-compose.custom.yml, só na VPS-00).
+# O painel só abre por https://server.openlead.app (Traefik, pela rede Docker).
+# As portas do Coolify escutam apenas em 127.0.0.1. Acesso de emergência por túnel SSH:
+#   ssh -L 8000:127.0.0.1:8000 root@5.253.233.219  ->  http://localhost:8000
+# O upgrade.sh do Coolify usa este arquivo sozinho (se ele existir).
+services:
+  coolify:
+    ports: !override
+      - "127.0.0.1:${APP_PORT:-8000}:8080"
+      - "127.0.0.1:${REVERB_PORT:-${SOKETI_PORT:-6001}}:6001"
+      - "127.0.0.1:6002:6002"

@@ -1,0 +1,12 @@
+# Gerenciado pelo openlead-agente (/etc/fail2ban/jail.d/openlead.local).
+# Bane por 1 h quem errar o login do SSH 5 vezes em 10 min.
+# Nunca bane: a própria máquina, as redes Docker (10.0.0.0/8 e 172.16.0.0/12) e a VPS-00 (Coolify).
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 10.0.0.0/8 172.16.0.0/12 5.253.233.219
+bantime = 1h
+findtime = 10m
+maxretry = 5
+
+[sshd]
+enabled = true
+backend = systemd

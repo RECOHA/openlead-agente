@@ -1,0 +1,4 @@
+fail2ban: active
+|  |- Total failed:	0
+|  `- Journal matches:	_SYSTEMD_UNIT=ssh.service + _COMM=sshd
+   |- Total banned:	0

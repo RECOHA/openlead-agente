@@ -24,6 +24,7 @@ docker.socket
 dpkg-db-backup.timer
 e2scrub_all.timer
 e2scrub_reap.service
+fail2ban.service
 finalrd.service
 fstrim.timer
 fwupd-refresh.timer

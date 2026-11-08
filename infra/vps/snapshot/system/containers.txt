@@ -1,6 +1,6 @@
 coolify	coollabsio/coolify:4.6.0	running
 coolify-db	postgres:15-alpine	running
-coolify-proxy	traefik:v3.7	running
+coolify-proxy	traefik:v3.7.17	running
 coolify-proxy-error-pages	busybox:musl	running
 coolify-proxy-logrotate	alpine:3.24	running
 coolify-redis	redis:7-alpine	running

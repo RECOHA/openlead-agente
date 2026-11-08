@@ -5,7 +5,7 @@ networks:
 services:
   traefik:
     container_name: coolify-proxy
-    image: 'traefik:v3.7'
+    image: 'traefik:v3.7.17'
     restart: unless-stopped
     extra_hosts:
       - 'host.docker.internal:host-gateway'
@@ -15,7 +15,6 @@ services:
       - '80:80'
       - '443:443'
       - '443:443/udp'
-      - '8080:8080'
     healthcheck:
       test: 'wget -qO- http://localhost:80/ping || exit 1'
       interval: 4s
@@ -35,6 +34,7 @@ services:
       - '--entrypoints.https.http.encodequerysemicolons=true'
       - '--entryPoints.https.http2.maxConcurrentStreams=250'
       - '--entrypoints.https.http3'
+      - '--entrypoints.https.http.middlewares=security-headers@file'
       - '--providers.file.directory=/traefik/dynamic/'
       - '--providers.file.watch=true'
       - '--certificatesresolvers.letsencrypt.acme.httpchallenge=true'

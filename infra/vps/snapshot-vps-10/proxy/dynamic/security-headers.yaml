@@ -1,0 +1,9 @@
+# Gerenciado pelo openlead-agente (/data/coolify/proxy/dynamic/security-headers.yaml).
+# Ligado em todo o tráfego HTTPS pelo proxy (--entrypoints.https.http.middlewares=security-headers@file).
+http:
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        contentTypeNosniff: true
+        referrerPolicy: strict-origin-when-cross-origin

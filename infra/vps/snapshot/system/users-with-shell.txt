@@ -1,2 +1,1 @@
 root:0:/root:/bin/bash
-ubuntu:1000:/home/ubuntu:/bin/bash

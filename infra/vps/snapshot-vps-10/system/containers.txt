@@ -1,2 +1,3 @@
-coolify-proxy	traefik:v3.7	running
+coolify-proxy	traefik:v3.7.17	running
+coolify-proxy-error-pages	busybox:musl	running
 coolify-sentinel	coollabsio/sentinel:1.1.3	running

@@ -1,9 +1,12 @@
 ### /etc/ssh/sshd_config.d/00-openlead-hardening.conf
 # Gerenciado pelo openlead-agente: acesso SSH somente por chave.
+# Nome "00-" para vencer os outros arquivos (no sshd vale a 1ª ocorrência).
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 PermitRootLogin prohibit-password
 PubkeyAuthentication yes
+X11Forwarding no
+MaxAuthTries 3
 
 ### /etc/ssh/sshd_config.d/50-cloud-init.conf
 PasswordAuthentication yes
