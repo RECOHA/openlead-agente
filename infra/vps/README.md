@@ -157,3 +157,7 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   diferente de `.env.coolify-instance` (pendente). Fora isso, os arquivos instalados seguem `OK`.
 - **2026-11-09, depois do deploy** (feito pelo Renan no painel): o projeto `Pessoal` passou a se chamar `RoundCube`
   (mesmo UUID, `88x1fnddyu2k6iwunva8p1c4`) e o projeto vazio `RoundCube` antigo foi apagado. O serviço segue `roundcube`.
+- **2026-11-09 ~16:45 UTC** (pedido do Renan): Roundcube em português do Brasil, com o arquivo novo
+  `zz-openlead-idioma.php`. Contêiner recriado duas vezes (segundos fora). Conferido: login em português mesmo com
+  navegador em inglês; rede só do serviço; `coolify`, `coolify-db` e `coolify-redis` seguem inalcançáveis por IP;
+  painel e `openlead.app/api/health` no ar.

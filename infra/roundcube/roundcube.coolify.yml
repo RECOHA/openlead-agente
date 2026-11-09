@@ -41,6 +41,15 @@ services:
           // `users` (já entraram aqui alguma vez). Endereço que nunca entrou vai direto à DreamHost, sem limite.
           $config['login_rate_limit'] = 3;
           $config['enable_installer'] = false;
+      # Arquivo à parte: o Coolify não regrava o `content:` de um arquivo que já existe (ver o runbook).
+      - type: bind
+        source: ./zz-openlead-idioma.php
+        target: /var/roundcube/config/zz-openlead-idioma.php
+        read_only: true
+        content: |
+          <?php
+          // Sem isto o idioma segue o navegador. Quem escolher outro em Configurações mantém o dele.
+          $config['language'] = 'pt_BR';
       # Lido depois do roundcube-override.ini (ordem alfabética), que a imagem gera com post_max_size igual
       # ao limite de upload: o multipart de um anexo de 25 MB passaria disso.
       - type: bind

@@ -42,6 +42,13 @@ restaure o banco:
 scripts/vps.sh vps-00 'C=roundcube-0jpqdwhvfa5vdheffsdxlwn6; docker exec $C cp -p /var/roundcube/db/sqlite.db.antes-da-troca /var/roundcube/db/sqlite.db && docker restart $C'
 ```
 
+## Mudar a configuração
+
+O Coolify só grava o `content:` de um arquivo na primeira vez. Depois disso, o `PATCH` do compose não regrava o
+arquivo, e a API recusa editar (`422`, `read_only_fields: content`). Por isso, config nova vai em um arquivo novo
+em `/var/roundcube/config/` (como `zz-openlead-idioma.php`), e o deploy segue os passos 3 e 4 acima. Confira
+depois se a linha chegou ao contêiner.
+
 ## Provas depois de cada deploy
 
 ```bash
