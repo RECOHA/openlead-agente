@@ -37,9 +37,19 @@ services:
           $config['use_https'] = true;
           // Pede a des_key de 32 caracteres (.env.roundcube.enc).
           $config['cipher_method'] = 'AES-256-CBC';
-          // Sem BasicAuth, esta é a única barreira contra robôs: no máximo 3 falhas por minuto.
+          // No máximo 3 falhas por minuto, contadas por conta e só para contas que já têm linha na tabela
+          // `users` (já entraram aqui alguma vez). Endereço que nunca entrou vai direto à DreamHost, sem limite.
           $config['login_rate_limit'] = 3;
           $config['enable_installer'] = false;
+      # Lido depois do roundcube-override.ini (ordem alfabética), que a imagem gera com post_max_size igual
+      # ao limite de upload: o multipart de um anexo de 25 MB passaria disso.
+      - type: bind
+        source: ./zzz_roundcube-custom.ini
+        target: /usr/local/etc/php/conf.d/zzz_roundcube-custom.ini
+        read_only: true
+        content: |
+          post_max_size=28M
+          memory_limit=256M
     labels:
       - traefik.enable=true
       - traefik.http.routers.roundcube-https.rule=Host(`email.openlead.app`)
