@@ -1,0 +1,59 @@
+# Serviço `roundcube` do Coolify (projeto `Pessoal`), na VPS-00: webmail das contas da DreamHost em
+# https://email.openlead.app. Os e-mails continuam na DreamHost; aqui ficam só preferências, contatos
+# e assinaturas (SQLite no volume, sem backup). Runbook: infra/roundcube/README.md.
+#
+# A VPS-00 guarda a chave root de todas as VPS, então o contêiner fica isolado do Coolify:
+#   - só na rede própria do serviço (`connect_to_docker_network` desligado no Coolify). Nunca na rede
+#     `coolify`, onde estão `coolify`, `coolify-db` e `coolify-redis`;
+#   - sem `ports:` (só o Traefik chega nele) e sem `docker.sock`.
+# Se o Traefik não alcançar o contêiner (504), ligue o `coolify-proxy` à rede do serviço; nunca o inverso.
+#
+# As rotas ficam nas labels, e não no campo de domínio do Coolify, para estarem versionadas aqui.
+# `security-headers` (HSTS etc.) já vale para todo o entrypoint https.
+services:
+  roundcube:
+    image: roundcube/roundcubemail:1.7.6-apache
+    restart: unless-stopped
+    environment:
+      ROUNDCUBEMAIL_DEFAULT_HOST: ssl://imap.dreamhost.com
+      ROUNDCUBEMAIL_DEFAULT_PORT: "993"
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://smtp.dreamhost.com
+      ROUNDCUBEMAIL_SMTP_PORT: "587"
+      ROUNDCUBEMAIL_DB_TYPE: sqlite
+      ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 25M
+      # Fixa (.env.roundcube.enc): sem ela a imagem sorteia outra e as sessões e senhas cifradas se perdem.
+      ROUNDCUBEMAIL_DES_KEY: ${ROUNDCUBEMAIL_DES_KEY:?}
+    volumes:
+      # Só o banco. /var/www/html fica fora, para a troca de tag trocar o código.
+      - roundcube-db:/var/roundcube/db
+      - type: bind
+        source: ./zz-openlead.php
+        target: /var/roundcube/config/zz-openlead.php
+        read_only: true
+        content: |
+          <?php
+          // Lido por último pelo entrypoint da imagem (tudo em /var/roundcube/config/*.php).
+          // O TLS termina no Traefik: sem isto o Roundcube não marca o cookie de sessão como Secure.
+          $config['use_https'] = true;
+          // Pede a des_key de 32 caracteres (.env.roundcube.enc).
+          $config['cipher_method'] = 'AES-256-CBC';
+          // Sem BasicAuth, esta é a única barreira contra robôs: no máximo 3 falhas por minuto.
+          $config['login_rate_limit'] = 3;
+          $config['enable_installer'] = false;
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.roundcube-https.rule=Host(`email.openlead.app`)
+      - traefik.http.routers.roundcube-https.entrypoints=https
+      - traefik.http.routers.roundcube-https.tls.certresolver=letsencrypt
+      - traefik.http.routers.roundcube-http.rule=Host(`email.openlead.app`)
+      - traefik.http.routers.roundcube-http.entrypoints=http
+      - traefik.http.routers.roundcube-http.middlewares=redirect-to-https@file
+      - traefik.http.services.roundcube.loadbalancer.server.port=80
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512m
+
+volumes:
+  roundcube-db:

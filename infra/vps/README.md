@@ -15,7 +15,7 @@ vão conversar por uma rede privada entre as VPS (WireGuard), sem abrir a porta 
 
 | Nome | IP | Provedor | Papel | Config local |
 |---|---|---|---|---|
-| VPS-00 | 5.253.233.219 | Contabo | Só o Coolify (painel https://server.openlead.app), que gerencia as outras | `.env.coolify.enc` |
+| VPS-00 | 5.253.233.219 | Contabo | Coolify (painel https://server.openlead.app), que gerencia as outras. Única exceção: o webmail Roundcube, isolado do Coolify ([`../roundcube/README.md`](../roundcube/README.md)) | `.env.coolify.enc` |
 | VPS-01 | 179.197.231.251 | Hostinger | OpenLead (`web`, `worker`, `db`), gerenciado pelo Coolify da VPS-00 | `.env.vps-01.enc` |
 | VPS-10 | 164.68.96.72 | Contabo | Scout (6 vCPU, 11 GB). Formatada em 2026-11-07, montada como a VPS-01. O Coolify subiu o proxy (80/443), mas nenhum domínio aponta para ela | `.env.vps-10.enc` (tem a senha de root, para o console da Contabo) |
 
@@ -146,3 +146,12 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   do bmad-loop com o caminho certo (`bmad-loop`, do PATH; antes apontavam para `C:/Users/renan.hagiwara/`, que
   não existe neste PC, e falhavam calados). A foto do fail2ban guarda só a config (sem contadores). Visto no
   teste: o fail2ban da VPS-10 já tinha banido 5 IPs na primeira meia hora.
+- **2026-11-09 14:49 UTC** (pedido do Renan): Roundcube `1.7.6-apache` na VPS-00, em `email.openlead.app`, serviço
+  `roundcube` do projeto `Pessoal` no Coolify. Conferido: HTTPS válido com HSTS; rede só do serviço, sem
+  `docker.sock` e sem `ports:`; de dentro dele, `coolify`, `coolify-db` e `coolify-redis` não respondem (por nome e
+  por IP); painel e `openlead.app/api/health` seguem no ar. Nenhuma porta nova no ufw.
+- **2026-11-09, visto na foto** (mudanças de fora do Roundcube, feitas pelo Coolify ou por deploy): Coolify de 4.6.0
+  para 4.7.0 e Sentinel de 1.1.3 para 1.1.5 nas 3 VPS. VPS-10: proxy com access log e `coolify-proxy-logrotate`, como
+  as outras. VPS-01: contêineres do `openlead-ops` recriados na imagem `ops` (`bootstrap` e `pronto` em `created`) e
+  a rede `vadwerrxhzbfdlm7znomjeq9` sumiu. Projeto vazio `RoundCube` no Coolify, sem uso. O `.env` do Coolify está
+  diferente de `.env.coolify-instance` (pendente). Fora isso, os arquivos instalados seguem `OK`.

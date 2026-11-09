@@ -1,1 +1,2 @@
+email.openlead.app
 server.openlead.app

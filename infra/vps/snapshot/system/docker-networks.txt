@@ -1,3 +1,4 @@
+0jpqdwhvfa5vdheffsdxlwn6	bridge
 bridge	bridge
 coolify	bridge
 host	host
