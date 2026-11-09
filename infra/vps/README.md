@@ -164,3 +164,5 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
 - **2026-11-09 ~17:00 UTC** (pedido do Renan, para testar): temas `roundcube/larry` 1.6.1 e `johndoh/stretchedelastic`
   0.2 no Roundcube, por `ROUNDCUBEMAIL_COMPOSER_PLUGINS`; o padrão segue `elastic`. Conferido: os arquivos dos dois
   temas respondem 200 e o isolamento continua igual. Visto na foto, de fora disso: Coolify de 4.7.0 para 4.7.1.
+- **2026-11-09 17:44 UTC, visto na foto** (de fora do Roundcube, deploy do `openlead-ops`): VPS-01 voltou a ter a rede
+  `vadwerrxhzbfdlm7znomjeq9`. No firewall, só as regras internas que o Docker cria para essa rede; nenhuma porta nova.
