@@ -15,7 +15,7 @@ assinaturas. Cada conta entra com o próprio login, sem senha extra na frente.
 
 | O quê | UUID |
 |---|---|
-| Projeto `Pessoal` | `88x1fnddyu2k6iwunva8p1c4` (ambiente `production`) |
+| Projeto `RoundCube` | `88x1fnddyu2k6iwunva8p1c4` (ambiente `production`) |
 | Servidor VPS-00 | `87pglkbb8lcv6qivibkcyoof` |
 | Serviço `roundcube` | `0jpqdwhvfa5vdheffsdxlwn6` (contêiner `roundcube-0jpqdwhvfa5vdheffsdxlwn6`) |
 

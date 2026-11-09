@@ -1,4 +1,4 @@
-# Serviço `roundcube` do Coolify (projeto `Pessoal`), na VPS-00: webmail das contas da DreamHost em
+# Serviço `roundcube` do Coolify (projeto `RoundCube`), na VPS-00: webmail das contas da DreamHost em
 # https://email.openlead.app. Os e-mails continuam na DreamHost; aqui ficam só preferências, contatos
 # e assinaturas (SQLite no volume, sem backup). Runbook: infra/roundcube/README.md.
 #

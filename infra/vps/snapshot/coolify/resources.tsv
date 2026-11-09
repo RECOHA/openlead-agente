@@ -7,13 +7,11 @@ id	name	ip	user	port
 ## projects
 id	name
 1	OpenLead
-2	RoundCube
-3	Pessoal
+3	RoundCube
 
 ## environments
 id	name	project_id
 1	production	1
-2	production	2
 3	production	3
 
 ## applications
