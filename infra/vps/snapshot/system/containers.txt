@@ -1,4 +1,4 @@
-coolify	coollabsio/coolify:4.7.0	running
+coolify	coollabsio/coolify:4.7.1	running
 coolify-db	postgres:15-alpine	running
 coolify-proxy	traefik:v3.7.17	running
 coolify-proxy-error-pages	busybox:musl	running

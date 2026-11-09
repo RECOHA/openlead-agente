@@ -21,6 +21,8 @@ services:
       ROUNDCUBEMAIL_SMTP_PORT: "587"
       ROUNDCUBEMAIL_DB_TYPE: sqlite
       ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 25M
+      # Temas extras, com versão fixa. A imagem baixa do Packagist toda vez que o contêiner inicia.
+      ROUNDCUBEMAIL_COMPOSER_PLUGINS: roundcube/larry:1.6.1,johndoh/stretchedelastic:0.2
       # Fixa (.env.roundcube.enc): sem ela a imagem sorteia outra e as sessões e senhas cifradas se perdem.
       ROUNDCUBEMAIL_DES_KEY: ${ROUNDCUBEMAIL_DES_KEY:?}
     volumes:

@@ -161,3 +161,6 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   `zz-openlead-idioma.php`. Contêiner recriado duas vezes (segundos fora). Conferido: login em português mesmo com
   navegador em inglês; rede só do serviço; `coolify`, `coolify-db` e `coolify-redis` seguem inalcançáveis por IP;
   painel e `openlead.app/api/health` no ar.
+- **2026-11-09 ~17:00 UTC** (pedido do Renan, para testar): temas `roundcube/larry` 1.6.1 e `johndoh/stretchedelastic`
+  0.2 no Roundcube, por `ROUNDCUBEMAIL_COMPOSER_PLUGINS`; o padrão segue `elastic`. Conferido: os arquivos dos dois
+  temas respondem 200 e o isolamento continua igual. Visto na foto, de fora disso: Coolify de 4.7.0 para 4.7.1.

@@ -49,6 +49,15 @@ arquivo, e a API recusa editar (`422`, `read_only_fields: content`). Por isso, c
 em `/var/roundcube/config/` (como `zz-openlead-idioma.php`), e o deploy segue os passos 3 e 4 acima. Confira
 depois se a linha chegou ao contêiner.
 
+## Temas
+
+O padrão é o `elastic`. Os extras estão em `ROUNDCUBEMAIL_COMPOSER_PLUGINS`, com versão fixa: `roundcube/larry` e
+`johndoh/stretchedelastic`. Cada conta escolhe o seu em Configurações > Preferências > Interface do usuário.
+Os arquivos dos temas ficam em `/static.php/skins/...`; o caminho `/skins/...` responde 404 até no `elastic`.
+
+A imagem baixa esses pacotes do Packagist toda vez que o contêiner inicia. Para tirar um tema, apague o pacote da
+variável e siga os passos 3 e 4 de "Atualizar a tag".
+
 ## Provas depois de cada deploy
 
 ```bash
