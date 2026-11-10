@@ -166,3 +166,5 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   temas respondem 200 e o isolamento continua igual. Visto na foto, de fora disso: Coolify de 4.7.0 para 4.7.1.
 - **2026-11-09 17:44 UTC, visto na foto** (de fora do Roundcube, deploy do `openlead-ops`): VPS-01 voltou a ter a rede
   `vadwerrxhzbfdlm7znomjeq9`. No firewall, só as regras internas que o Docker cria para essa rede; nenhuma porta nova.
+- **2026-11-10, visto na foto** (de fora do Roundcube): Coolify de 4.7.1 para 4.7.3. VPS-01: `openlead-ops` andou,
+  com `bootstrap` terminado e `pronto` rodando.
