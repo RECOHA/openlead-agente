@@ -1,0 +1,35 @@
+<roundcube:include file="includes/layout.html" />
+
+<div id="layout-content" class="selected no-navbar" role="main">
+	<div id="ol-login">
+		<div class="ol-login-brand" aria-hidden="true">
+			<img src="/images/logo-dark.svg" class="ol-login-brand-logo" alt="" />
+			<div class="ol-login-brand-rings"></div>
+		</div>
+
+		<div class="ol-login-panel">
+			<div class="ol-login-box">
+				<roundcube:object name="logo" src="/images/logo.svg" data-src-dark="/images/logo-dark.svg" id="logo" alt="Logo" />
+				<h1 class="ol-login-title"><roundcube:label name="login" /></h1>
+				<p class="ol-login-product"><roundcube:object name="productname" /></p>
+
+				<roundcube:form id="login-form" name="login-form" method="post" class="propform">
+				<roundcube:object name="loginform" form="login-form" size="40" submit=true class="form-control" />
+					<div id="login-footer" role="contentinfo">
+						<roundcube:object name="version" condition="config:display_product_info == 2" />
+						<roundcube:if condition="config:support_url" />
+							<a href="<roundcube:var name='config:support_url' />" target="_blank" rel="noopener" class="support-link"><roundcube:label name="support" /></a>
+						<roundcube:endif />
+						<roundcube:container name="loginfooter" id="login-footer" />
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<noscript>
+	<p class="noscriptwarning"><roundcube:label name="noscriptwarning" /></p>
+</noscript>
+
+<roundcube:include file="includes/footer.html" />

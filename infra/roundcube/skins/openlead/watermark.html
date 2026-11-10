@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title></title>
+<style type="text/css">
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: url(images/icon.svg) center / 128px no-repeat #fff;
+}
+body:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, .92);
+}
+html.dark-mode > body {
+  background-color: #131b22;
+  background-image: url(images/icon-dark.svg);
+}
+html.dark-mode > body:before {
+  background: rgba(19, 27, 34, .94);
+}
+</style>
+<script>
+  try {
+    if (document.cookie.indexOf('colorMode=dark') > -1
+      || (document.cookie.indexOf('colorMode=light') === -1 && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
+      document.documentElement.className += ' dark-mode';
+    }
+  } catch (e) { }
+</script>
+</head>
+<body></body>
+</html>

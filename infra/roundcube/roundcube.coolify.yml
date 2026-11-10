@@ -23,11 +23,20 @@ services:
       ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 25M
       # Temas extras, com versão fixa. A imagem baixa do Packagist toda vez que o contêiner inicia.
       ROUNDCUBEMAIL_COMPOSER_PLUGINS: roundcube/larry:1.6.1,johndoh/stretchedelastic:0.2
+      # Tema padrão: o skin próprio (infra/roundcube/skins/openlead), montado abaixo. Quem escolheu outro em
+      # Configurações mantém o dele.
+      ROUNDCUBEMAIL_SKIN: openlead
       # Fixa (.env.roundcube.enc): sem ela a imagem sorteia outra e as sessões e senhas cifradas se perdem.
       ROUNDCUBEMAIL_DES_KEY: ${ROUNDCUBEMAIL_DES_KEY:?}
     volumes:
       # Só o banco. /var/www/html fica fora, para a troca de tag trocar o código.
       - roundcube-db:/var/roundcube/db
+      # Skin próprio, copiado de infra/roundcube/skins/openlead para a VPS-00 (ver "Temas" no runbook).
+      # Pasta do host, e não `content:`, porque são vários arquivos. Só leitura.
+      - type: bind
+        source: /srv/roundcube/skins/openlead
+        target: /var/www/html/skins/openlead
+        read_only: true
       - type: bind
         source: ./zz-openlead.php
         target: /var/roundcube/config/zz-openlead.php

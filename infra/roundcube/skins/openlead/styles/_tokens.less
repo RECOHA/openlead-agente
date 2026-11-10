@@ -1,0 +1,96 @@
+/**
+ * OpenLead design tokens for the Roundcube "openlead" skin.
+ *
+ * Source of truth: openlead/packages/ui/src/styles/theme.css and the OpenLead DESIGN.md.
+ * Only the brand, scale and role values used by this skin are listed here. Keep the hex
+ * values identical to theme.css when the design system changes.
+ */
+
+// Brand (brand/*.svg)
+@ol-navy:   #0b1f33;
+@ol-green:  #14c47d;
+@ol-white:  #ffffff;
+
+// Green scale
+@ol-green-100: #e3fcf2;
+@ol-green-200: #b7f8de;
+@ol-green-300: #85f2c6;
+@ol-green-400: #15d186;
+@ol-green-600: #10a167;
+@ol-green-700: #0d7f51;
+@ol-green-800: #084d31;
+@ol-green-900: #063924;
+
+// Slate scale (neutral tinted toward the navy)
+@ol-slate-100:  #f4f7f9;
+@ol-slate-200:  #e6ebf1;
+@ol-slate-300:  #d5dfe9;
+@ol-slate-400:  #a5bace;
+@ol-slate-500:  #809dbb;
+@ol-slate-600:  #6f91b2;
+@ol-slate-700:  #507395;
+@ol-slate-800:  #304459;
+@ol-slate-900:  #233342;
+@ol-slate-1000: #18222d;
+@ol-slate-1100: #131b22;
+@ol-slate-1200: #0c1015;
+
+// Blue scale (information only)
+@ol-blue-100: #f1f7fc;
+@ol-blue-300: #cde0f4;
+@ol-blue-500: #609edd;
+@ol-blue-700: #2872bb;
+@ol-blue-800: #184470;
+@ol-blue-1000: #0c2239;
+
+// Light theme roles
+@ol-background:          @ol-white;
+@ol-background-recessed: @ol-slate-100;
+@ol-foreground:          @ol-slate-900;
+@ol-foreground-subtle:   @ol-slate-700;
+@ol-border:              @ol-slate-300;
+@ol-border-subtle:       @ol-slate-200;
+@ol-border-control:      @ol-slate-700;
+@ol-primary:             @ol-green-700;
+@ol-primary-hover:       @ol-green-800;
+@ol-accent:              mix(@ol-primary, @ol-background, 8%);
+@ol-danger:              #cd3642;
+@ol-warning:             #ac5918;
+@ol-info:                @ol-blue-700;
+
+// Dark theme roles
+@ol-dark-background:          @ol-slate-1100;
+@ol-dark-background-raised:   @ol-slate-1000;
+@ol-dark-background-recessed: @ol-slate-1200;
+@ol-dark-foreground:          @ol-slate-300;
+@ol-dark-foreground-subtle:   @ol-slate-500;
+@ol-dark-border:              @ol-slate-800;
+@ol-dark-border-subtle:       @ol-slate-900;
+@ol-dark-border-control:      @ol-slate-600;
+@ol-dark-primary:             @ol-green-600;
+@ol-dark-primary-emphasis:    @ol-green;
+@ol-dark-primary-hover:       @ol-green-300;
+@ol-dark-on-primary:          @ol-navy;
+@ol-dark-accent:              mix(@ol-dark-primary, @ol-dark-background, 12%);
+@ol-dark-danger:              #eb5c69;
+@ol-dark-warning:             #d67305;
+@ol-dark-info:                @ol-blue-500;
+
+// Nav ("chrome"): navy in both themes
+@ol-chrome:         @ol-navy;
+@ol-on-chrome:      @ol-white;
+@ol-chrome-active:  @ol-green;
+@ol-chrome-hover:   #1a2d40;
+@ol-chrome-current: #1d3043;
+@ol-chrome-border:  rgba(255, 255, 255, .12);
+
+// Overlay and float shadow
+@ol-overlay:      rgba(12, 16, 21, .55);
+@ol-dark-overlay: rgba(0, 0, 0, .6);
+
+// Type and shape
+@ol-font-family:    Consolas, "Inconsolata", ui-monospace, Menlo, monospace;
+@ol-letter-spacing: -.5px;
+@ol-radius-sm:      2px;
+@ol-radius-md:      4px;
+@ol-radius-lg:      8px;

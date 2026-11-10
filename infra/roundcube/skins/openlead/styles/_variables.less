@@ -1,0 +1,230 @@
+/**
+ * Elastic variables redefined with the OpenLead tokens.
+ *
+ * LESS uses the last definition of a variable, so everything here wins over
+ * skins/elastic/styles/colors.less and variables.less, which are imported first.
+ */
+
+@import (reference) "_tokens";
+
+// Layout: wider Nav, so the labels fit in the monospace font ("Configurações").
+@layout-menu-width: 96px;
+
+// Base palette
+@color-main:                @ol-primary;
+@color-main-dark:           @ol-navy;
+@color-black:               @ol-slate-1200;
+@color-font:                @ol-foreground;
+@color-link:                @ol-primary;
+@color-link-hover:          @ol-primary-hover;
+@color-border:              @ol-border;
+@color-error:               @ol-danger;
+@color-success:             @ol-primary;
+@color-warning:             @ol-warning;
+
+@color-black-shade-text:    @ol-foreground-subtle;
+@color-black-shade-border:  @ol-border;
+@color-black-shade-bg:      @ol-border-subtle;
+
+// Layout
+@color-layout-border:               @ol-border;
+@color-layout-header:               @ol-foreground;
+@color-layout-sidebar-background:   @ol-background-recessed;
+@color-layout-list-background:      @ol-background;
+@color-layout-content-background:   @ol-background;
+@color-layout-header-background:    @ol-background;
+@color-layout-footer-background:    @ol-background;
+
+@color-layout-mobile-header-background: @ol-background;
+@color-layout-mobile-footer-background: @ol-background;
+
+// Task menu (Nav): navy, green for the active and the action button
+@color-taskmenu-background:                     @ol-chrome;
+@color-taskmenu-button:                         fade(@ol-on-chrome, 80%);
+@color-taskmenu-button-selected:                @ol-on-chrome;
+@color-taskmenu-button-action:                  @ol-chrome-active;
+@color-taskmenu-button-selected-background:     @ol-chrome-current;
+@color-taskmenu-button-action-background:       transparent;
+@color-taskmenu-button-hover:                   @ol-on-chrome;
+@color-taskmenu-button-selected-hover:          @ol-on-chrome;
+@color-taskmenu-button-action-hover:            @ol-chrome-active;
+@color-taskmenu-button-background-hover:        @ol-chrome-hover;
+@color-taskmenu-button-action-background-hover: @ol-chrome-hover;
+@color-taskmenu-button-logout:                  #ff8a94;
+@color-taskmenu-button-logout-hover:            #ffb3b9;
+
+// Toolbar
+@color-toolbar-button:                  @ol-foreground;
+@color-toolbar-button-background-hover: @ol-background-recessed;
+@color-searchbar-background:            @ol-background-recessed;
+
+// Toolbar menu
+@color-menu-hover:               @ol-foreground;
+@color-menu-hover-background:    @ol-accent;
+
+// Listings
+@color-list:                        @ol-foreground;
+@color-list-selected:               @ol-foreground;
+@color-list-selected-background:    @ol-green-100;
+@color-list-flagged:                @ol-danger;
+@color-list-deleted:                fade(@ol-foreground, 50%);
+@color-list-secondary:              @ol-foreground-subtle;
+@color-list-droptarget-background:  @ol-blue-100;
+@color-list-focus-indicator:        @ol-primary;
+@color-list-border:                 @ol-border-subtle;
+@color-list-badge:                  @ol-white;
+@color-list-badge-background:       @ol-primary;
+@color-list-recent:                 @ol-primary;
+@color-list-recent-badge:           @ol-white;
+@color-list-recent-badge-background: @ol-primary;
+@color-list-pagenav:                @ol-foreground-subtle;
+@color-list-icon:                   @ol-foreground-subtle;
+@color-list-unread-status:          @ol-primary;
+
+@color-attachmentlist-border:       @ol-border-subtle;
+@color-attachmentlist-background:   @ol-background-recessed;
+
+@color-drag-layer:                  @ol-on-chrome;
+@color-drag-layer-background:       @ol-chrome;
+@color-drag-layer-shadow:           @ol-border;
+
+// Messages (toasts and alert boxes)
+@color-message:                     @ol-foreground;
+@color-message-background:          @ol-blue-100;
+@color-message-text:                @ol-white;
+@color-message-link:                @ol-primary;
+@color-message-information:         @ol-info;
+@color-message-success:             @ol-primary;
+@color-message-warning:             @ol-warning;
+@color-message-error:               @ol-danger;
+@color-message-loading:             @ol-slate-800;
+@color-message-warning-text:        @ol-white;
+@color-message-error-box-background:        fade(@ol-danger, 12%);
+@color-message-information-box-background:  @ol-blue-100;
+@color-message-success-box-background:      @ol-green-100;
+@color-message-warning-box-background:      fade(@ol-warning, 12%);
+
+// Popovers
+@color-popover-shadow:                       fade(@ol-slate-1200, 20%);
+@color-popover-separator:                    @ol-foreground-subtle;
+@color-popover-separator-background:         @ol-background-recessed;
+@color-popover-mobile-header:                @ol-on-chrome;
+@color-popover-mobile-header-background:     @ol-chrome;
+@color-popover-mobile-dropbutton-background: @ol-background-recessed;
+
+// Dialogs
+@color-dialog-overlay-background:   @ol-overlay;
+@color-dialog-header:               @ol-foreground;
+@color-dialog-header-border:        @ol-border;
+
+@color-spinner-circle:              @ol-border;
+@color-spinner-item:                @ol-primary;
+
+// Forms
+@color-input:                       @ol-foreground;
+@color-input-border:                @ol-border-control;
+@color-input-border-focus:          @ol-primary;
+@color-input-border-focus-shadow:   @ol-primary;
+@color-input-border-invalid:        @ol-danger;
+@color-input-border-invalid-shadow: fade(@ol-danger, 35%);
+@color-input-addon-background:      @ol-background-recessed;
+@color-recipient-input-border:      @ol-border-control;
+@color-recipient-input-background:  @ol-background-recessed;
+@color-input-placeholder:           @ol-slate-500;
+
+@color-checkbox:                    @ol-border-control;
+@color-checkbox-checked:            @ol-primary;
+@color-checkbox-checked-disabled:   @ol-slate-400;
+@color-checkbox-focus:              @ol-primary;
+@color-checkbox-focus-shadow:       @ol-primary;
+
+@color-form-hint:                   @ol-foreground-subtle;
+@color-image-upload-background:     @ol-background-recessed;
+
+@color-btn-secondary:               @ol-foreground;
+@color-btn-secondary-background:    @ol-background-recessed;
+@color-btn-primary:                 @ol-white;
+@color-btn-primary-background:      @ol-primary;
+@color-btn-danger:                  @ol-white;
+@color-btn-danger-background:       @ol-danger;
+
+@color-quota-background:            @ol-background;
+@color-quota-text:                  @ol-foreground-subtle;
+@color-quota-value:                 @ol-primary;
+@color-quota-value-warning:         @ol-danger;
+
+@color-blockquote-background:       @ol-background-recessed;
+@color-blockquote-0:                @ol-info;
+@color-blockquote-1:                @ol-primary;
+@color-blockquote-2:                @ol-danger;
+
+@color-mail-signature:              @ol-foreground-subtle;
+@color-mail-headers:                @ol-foreground-subtle;
+@color-messagepart-border:          @ol-border-subtle;
+@color-messagepart-background:      @ol-background-recessed;
+
+@color-spellcheck-link:             @ol-danger;
+
+// Datepicker
+@color-datepicker-highlight:            @ol-primary;
+@color-datepicker-highlight-background: @ol-green-100;
+@color-datepicker-active:               @ol-white;
+@color-datepicker-active-background:    @ol-primary;
+
+// Image tools
+@color-image-tools:            @ol-white;
+@color-image-tools-background: fade(@ol-navy, 60%);
+@color-image-tools-hover:      fade(@ol-navy, 80%);
+
+// Scrollbars
+@color-scrollbar-thumb: @ol-slate-400;
+@color-scrollbar-track: @ol-background-recessed;
+
+
+// Dark mode
+@color-dark-main:        @ol-dark-primary;
+@color-dark-background:  @ol-dark-background;
+@color-dark-font:        @ol-dark-foreground;
+@color-dark-border:      @ol-dark-border;
+@color-dark-hint:        @ol-dark-foreground-subtle;
+@color-dark-information: @ol-blue-800;
+@color-dark-success:     @ol-green-900;
+@color-dark-warning:     shade(@ol-dark-warning, 55%);
+@color-dark-error:       shade(@ol-dark-danger, 55%);
+
+@color-dark-list-selected:              @ol-dark-primary-emphasis;
+@color-dark-list-selected-background:   @ol-chrome-current;
+@color-dark-list-badge:                 @ol-dark-foreground;
+@color-dark-list-badge-background:      @ol-dark-border;
+@color-dark-list-deleted:               @ol-slate-700;
+@color-dark-list-droptarget-background: @ol-blue-1000;
+@color-dark-list-border:                @ol-dark-border-subtle;
+
+@color-dark-input:                        @ol-dark-foreground;
+@color-dark-input-border:                 @ol-dark-border-control;
+@color-dark-input-background:             @ol-dark-background;
+@color-dark-input-focus:                  @ol-slate-200;
+@color-dark-input-border-focus:           @ol-dark-primary-emphasis;
+@color-dark-input-background-focus:       @ol-dark-background-raised;
+@color-dark-input-addon-background:       @ol-dark-background-raised;
+@color-dark-input-addon-background-focus: @ol-chrome-current;
+@color-dark-checkbox:                     @ol-dark-border-control;
+@color-dark-checkbox-checked:             @ol-dark-primary;
+
+@color-dark-btn:                      @ol-dark-foreground;
+@color-dark-btn-primary-background:   @ol-dark-primary-emphasis;
+@color-dark-btn-secondary-background: @ol-dark-border;
+@color-dark-btn-danger-background:    shade(@ol-dark-danger, 25%);
+
+@color-dark-dialog-overlay-background: @ol-dark-overlay;
+@color-dark-popover-background:        @ol-dark-background-raised;
+@color-dark-popover-border:            @ol-dark-border;
+
+@color-dark-message-loading:           @ol-dark-background-raised;
+
+@color-dark-scrollbar-thumb:           @ol-dark-border;
+@color-dark-scrollbar-track:           @ol-dark-background;
+
+@color-dark-blockquote-0:              @ol-dark-info;
+@color-dark-blockquote-1:              @ol-green-400;
+@color-dark-blockquote-2:              @ol-dark-danger;

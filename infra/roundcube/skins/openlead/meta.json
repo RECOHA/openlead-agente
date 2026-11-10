@@ -1,0 +1,23 @@
+{
+	"name": "OpenLead",
+	"author": "OpenLead (based on Elastic by Aleksander Machniak)",
+	"license": "Creative Commons Attribution-ShareAlike",
+	"license-url": "http://creativecommons.org/licenses/by-sa/3.0/",
+	"extends": "elastic",
+	"config": {
+		"supported_layouts": ["widescreen"],
+		"jquery_ui_colors_theme": "bootstrap",
+		"embed_css_location": "/styles/embed.css",
+		"editor_css_location": "/styles/embed.css",
+		"dark_mode_support": true,
+		"media_browser_css_location": "none",
+		"additional_logo_types": ["dark", "small", "small-dark"],
+		"favicon": "/images/openlead-favicon.ico",
+		"product_name": "OpenLead Webmail"
+	},
+	"meta": {
+		"viewport": "width=device-width, initial-scale=1.0, shrink-to-fit=no, maximum-scale=1.0",
+		"theme-color": "#f4f7f9",
+		"msapplication-navbutton-color": "#f4f7f9"
+	}
+}

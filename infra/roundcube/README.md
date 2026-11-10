@@ -9,6 +9,7 @@ assinaturas. Cada conta entra com o próprio login, sem senha extra na frente.
 | Arquivo | O que é |
 |---|---|
 | `roundcube.coolify.yml` | O compose do serviço (imagem, rotas do Traefik, `zz-openlead.php`) |
+| `skins/openlead/` | O skin próprio, tema padrão (ver "Temas") |
 | `../../.env.roundcube.enc` | `ROUNDCUBEMAIL_DES_KEY`, também gravada no Coolify como variável do serviço |
 
 ## No Coolify (VPS-00)
@@ -51,8 +52,27 @@ depois se a linha chegou ao contêiner.
 
 ## Temas
 
-O padrão é o `elastic`. Os extras estão em `ROUNDCUBEMAIL_COMPOSER_PLUGINS`, com versão fixa: `roundcube/larry` e
-`johndoh/stretchedelastic`. Cada conta escolhe o seu em Configurações > Preferências > Interface do usuário.
+O padrão é o `openlead` (`ROUNDCUBEMAIL_SKIN`), o skin próprio, filho do `elastic`. Os extras estão em
+`ROUNDCUBEMAIL_COMPOSER_PLUGINS`, com versão fixa: `roundcube/larry` e `johndoh/stretchedelastic`. Cada conta
+escolhe o seu em Configurações > Preferências > Interface do usuário; quem já escolheu um mantém o dele.
+
+### Skin `openlead`
+
+É feito no clone local do Roundcube (`roundcubemail/skins/openlead`, com `make css-openlead`) e copiado para
+`skins/openlead/` aqui. Na VPS-00 fica em `/srv/roundcube/skins/openlead` (dono `root`, só leitura para o
+resto), montado só leitura em `/var/www/html/skins/openlead`. Vai com o CSS já compilado (`*.min.css`): o
+servidor não compila nada. Ao trocar a tag do Roundcube, confira se `templates/login.html` e
+`templates/includes/menu.html` ainda batem com os do `elastic` da versão nova.
+
+Para mandar uma versão nova:
+
+```bash
+cp -r ../roundcubemail/skins/openlead infra/roundcube/skins/    # do clone local para cá (apague antes o que saiu)
+tar -C infra/roundcube/skins -cf - openlead | scripts/vps.sh 'set -e; rm -rf /srv/roundcube/skins/openlead.new; mkdir /srv/roundcube/skins/openlead.new; tar --no-same-owner --no-same-permissions -xf - -C /srv/roundcube/skins/openlead.new --strip-components=1; chmod -R u=rwX,go=rX /srv/roundcube/skins/openlead.new; rm -rf /srv/roundcube/skins/openlead.old; mv /srv/roundcube/skins/openlead /srv/roundcube/skins/openlead.old; mv /srv/roundcube/skins/openlead.new /srv/roundcube/skins/openlead; docker restart roundcube-0jpqdwhvfa5vdheffsdxlwn6'
+```
+
+O `docker restart` é obrigatório: a montagem segura a pasta antiga até o contêiner reiniciar. Deu errado: troque
+`openlead.old` de volta e reinicie. A pasta do host não passa pelo Coolify, então o `PATCH` não é preciso.
 Os arquivos dos temas ficam em `/static.php/skins/...`; o caminho `/skins/...` responde 404 até no `elastic`.
 
 A imagem baixa esses pacotes do Packagist toda vez que o contêiner inicia. Para tirar um tema, apague o pacote da

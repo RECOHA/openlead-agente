@@ -1,0 +1,554 @@
+/**
+ * OpenLead rules on top of Elastic: type, focus ring, radii, Nav and the login screen.
+ */
+
+@import (reference) "_tokens";
+
+/*** Font: Consolas on Windows, self-hosted Inconsolata elsewhere (metrics from theme.css) ***/
+
+.ol-inconsolata(@weight, @file, @range) {
+    @font-face {
+        font-family: "Inconsolata";
+        font-style: normal;
+        font-weight: @weight;
+        font-display: swap;
+        src: url("../fonts/@{file}") format("woff2");
+        unicode-range: @range;
+        size-adjust: 109.96%;
+        ascent-override: 83.66%;
+        descent-override: 22.82%;
+        line-gap-override: 0%;
+    }
+}
+
+@ol-range-latin: ~"U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD";
+@ol-range-latin-ext: ~"U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF";
+
+.ol-inconsolata(400, "inconsolata-latin-400-normal.woff2", @ol-range-latin);
+.ol-inconsolata(400, "inconsolata-latin-ext-400-normal.woff2", @ol-range-latin-ext);
+.ol-inconsolata(700, "inconsolata-latin-700-normal.woff2", @ol-range-latin);
+.ol-inconsolata(700, "inconsolata-latin-ext-700-normal.woff2", @ol-range-latin-ext);
+
+// Elastic calls this mixin wherever it sets the UI font; the later definition wins.
+.font-family {
+    font-family: @ol-font-family;
+}
+
+body,
+.popover,
+.ui-dialog,
+.tooltip,
+.btn,
+.form-control,
+.custom-select {
+    font-family: @ol-font-family;
+    letter-spacing: @ol-letter-spacing;
+}
+
+// Consolas has only 400 and 700: map the in-between weights to the nearest one.
+.font-weight-medium {
+    font-weight: 400 !important;
+}
+
+.font-weight-semibold,
+th,
+strong,
+b {
+    font-weight: 700;
+}
+
+// Mail content keeps the sender's own typography.
+.message-htmlpart,
+.message-part div.pre,
+.mce-content-body {
+    letter-spacing: normal;
+}
+
+
+/*** Focus ring: 1px gap in the background color plus a 3px solid ring ***/
+
+.style-input-focus {
+    outline: 2px solid transparent;
+    border-color: @color-input-border-focus;
+    box-shadow: 0 0 0 1px @ol-background, 0 0 0 4px @ol-primary;
+}
+
+a:focus-visible,
+.btn:focus-visible,
+button:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 1px @ol-background, 0 0 0 4px @ol-primary !important;
+}
+
+.btn:focus,
+.btn.focus {
+    box-shadow: none;
+}
+
+// Bootstrap's grey #ced4da border and Elastic's thick focus glow, replaced app-wide.
+.form-control,
+.custom-select {
+    border-color: @color-input-border;
+}
+
+.form-control:focus,
+.custom-select:focus {
+    border-color: @color-input-border-focus;
+    box-shadow: 0 0 0 1px @ol-background, 0 0 0 4px @ol-primary;
+}
+
+#taskmenu a:focus-visible {
+    box-shadow: inset 0 0 0 1px @ol-chrome, inset 0 0 0 4px @ol-chrome-active !important;
+}
+
+
+/*** Shape: radii 2 / 4 / 8 ***/
+
+.btn,
+.form-control,
+.custom-select,
+.input-group-text,
+.input-group > .form-control,
+.recipient-input,
+.dropdown-menu,
+.alert,
+.ui.alert,
+#messagestack > div {
+    border-radius: @ol-radius-md;
+}
+
+.input-group > .input-group-prepend > .input-group-text,
+.input-group > .input-group-prepend > .btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .form-control:not(:first-child),
+.input-group > .custom-select:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group > .form-control:not(:last-child),
+.input-group > .custom-select:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.popover,
+.ui-dialog,
+.modal-content {
+    border-radius: @ol-radius-lg;
+}
+
+.listing li .badge,
+.listing .unreadcount,
+.badge {
+    border-radius: 9999px;
+}
+
+
+/*** Buttons ***/
+
+.btn-primary {
+    &:hover:not(:disabled),
+    &:not(:disabled):not(.disabled):active {
+        background-color: @ol-primary-hover;
+        border-color: @ol-primary-hover;
+    }
+}
+
+.btn-secondary {
+    border: 1px solid @ol-border;
+
+    &:hover:not(:disabled) {
+        color: @ol-foreground;
+        background-color: @ol-border-subtle;
+        border-color: @ol-border;
+    }
+}
+
+// Floating compose button (phones): solid primary with the design system's float shadow.
+.floating-action-buttons a.button {
+    opacity: 1;
+    background: @ol-primary;
+    box-shadow: 0 8px 16px 0 fade(@ol-slate-1200, 20%);
+}
+
+html.dark-mode .floating-action-buttons a.button {
+    color: @ol-dark-on-primary;
+    background: @ol-dark-primary-emphasis;
+    box-shadow: 0 8px 16px 0 fade(#000, 45%);
+}
+
+// Elastic forces upper case on some action buttons; the design system never does.
+.btn.text-uppercase,
+#rcmloginsubmit {
+    text-transform: none !important;
+}
+
+
+/*** Nav (task menu) ***/
+
+#layout-menu {
+    #taskmenu a.selected {
+        box-shadow: inset 3px 0 0 @ol-chrome-active;
+    }
+
+    .popover-header img {
+        padding: .75rem;
+    }
+
+    // Elastic caps the links at 6rem; with the wider Nav they use its full width.
+    @media screen and (min-width: (@screen-width-xs + 1px)) {
+        #taskmenu a {
+            max-width: 100%;
+        }
+    }
+}
+
+html.layout-phone #layout-menu .popover-header {
+    background-color: @ol-chrome;
+}
+
+
+/*** Dark mode ***/
+
+html.dark-mode {
+    // The Nav stays navy in both themes.
+    #layout-menu,
+    &.layout-phone #layout-menu {
+        background: @ol-chrome;
+        border-right-color: @ol-chrome-border;
+
+        .popover-header,
+        .special-buttons a:not(:focus) {
+            background: @ol-chrome !important;
+        }
+    }
+
+    #taskmenu a {
+        color: fade(@ol-on-chrome, 80%);
+
+        &.selected {
+            color: @ol-on-chrome;
+            background-color: @ol-chrome-current;
+        }
+
+        &:hover {
+            color: @ol-on-chrome;
+            background-color: @ol-chrome-hover;
+        }
+    }
+
+    #taskmenu .action-buttons a {
+        color: @ol-chrome-active;
+    }
+
+    #taskmenu a.logout {
+        color: #ff8a94 !important;
+    }
+
+    // Primary actions: bright green with navy text.
+    .btn-primary,
+    .ui-dialog .ui-dialog-buttonset .btn.mainaction,
+    .formbuttons .btn.mainaction {
+        color: @ol-dark-on-primary;
+        background-color: @ol-dark-primary-emphasis;
+        border-color: @ol-dark-primary-emphasis;
+
+        &:hover:not(:disabled) {
+            color: @ol-dark-on-primary;
+            background-color: @ol-dark-primary-hover;
+            border-color: @ol-dark-primary-hover;
+        }
+    }
+
+    a,
+    .link {
+        color: @ol-dark-primary-emphasis;
+    }
+
+    #layout-sidebar {
+        background-color: @ol-dark-background-recessed;
+    }
+
+    .form-control:focus,
+    .custom-select:focus,
+    a:focus-visible,
+    .btn:focus-visible,
+    button:focus-visible {
+        box-shadow: 0 0 0 1px @ol-dark-background, 0 0 0 4px @ol-dark-primary-emphasis !important;
+    }
+
+    #logo {
+        opacity: 1;
+    }
+}
+
+
+/*** Login screen ***/
+
+.task-login {
+    #layout-content {
+        display: block;
+        width: 100%;
+        padding: 0;
+        text-align: left;
+        background: @ol-background-recessed;
+    }
+
+    #logo {
+        position: static;
+        top: auto;
+        display: none;
+        max-height: 40px;
+        margin-bottom: 2rem;
+    }
+
+    #login-form {
+        top: auto;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+
+        // The fields sit in table cells; the cell's default 1px padding pushed them
+        // inside the button's edges.
+        td.input {
+            padding: 0;
+        }
+
+        // Icon and field read as one control: same border, one focus ring around both.
+        .input-group-lg {
+            border-radius: @ol-radius-md;
+
+            & > .form-control,
+            & > .custom-select,
+            & > .input-group-prepend > .input-group-text {
+                height: 40px;
+                font-size: 14px;
+                line-height: 20px;
+                border: 1px solid @ol-border-control;
+                border-radius: @ol-radius-md;
+            }
+
+            & > .input-group-prepend > .input-group-text {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+                color: @ol-foreground-subtle;
+                background: @ol-background-recessed;
+            }
+
+            & > .form-control {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+
+                &:focus {
+                    box-shadow: none;
+                }
+            }
+
+            &:focus-within {
+                box-shadow: 0 0 0 1px @ol-background, 0 0 0 4px @ol-primary;
+
+                & > .form-control,
+                & > .input-group-prepend > .input-group-text {
+                    border-color: @ol-primary;
+                }
+            }
+        }
+
+        .form-group {
+            margin-bottom: .75rem;
+        }
+
+        .formbuttons {
+            margin-top: 1.5rem;
+        }
+
+        .formbuttons + .oauthlogin {
+            border-top-color: @ol-border;
+        }
+    }
+
+    #rcmloginsubmit {
+        height: 40px;
+        padding: 0 1rem;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 20px;
+        border-radius: @ol-radius-md;
+    }
+
+    #login-footer {
+        margin-top: 2rem;
+        color: @ol-foreground-subtle;
+        font-size: 12px;
+        line-height: 16px;
+
+        & > div {
+            margin-top: 1rem;
+            padding: .75rem 1rem;
+            color: @ol-foreground;
+            background: @ol-background-recessed;
+            border: 1px solid @ol-border;
+            border-radius: @ol-radius-md;
+        }
+
+        .support-link {
+            color: @ol-primary;
+        }
+    }
+}
+
+#ol-login {
+    display: flex;
+    min-height: 100%;
+}
+
+.ol-login-brand {
+    position: relative;
+    display: flex;
+    flex: 0 0 44%;
+    max-width: 640px;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3rem;
+    overflow: hidden;
+    background: @ol-chrome;
+}
+
+.ol-login-brand-logo {
+    position: relative;
+    z-index: 1;
+    width: 192px;
+    height: auto;
+}
+
+// The two open rings of the logo, drawn large in the corner of the brand panel.
+.ol-login-brand-rings {
+    position: absolute;
+    right: -18vh;
+    bottom: -18vh;
+    width: 72vh;
+    height: 72vh;
+    border-radius: 50%;
+    border: 6vh solid fade(@ol-on-chrome, 6%);
+    border-top-color: transparent;
+    transform: rotate(-35deg);
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 14vh;
+        border-radius: 50%;
+        border: 6vh solid fade(@ol-on-chrome, 6%);
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 9vh;
+        height: 9vh;
+        margin: -4.5vh 0 0 -4.5vh;
+        border-radius: 50%;
+        background: @ol-chrome-active;
+        opacity: .9;
+    }
+}
+
+.ol-login-panel {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: @ol-background;
+}
+
+.ol-login-box {
+    width: 100%;
+    max-width: 360px;
+}
+
+.ol-login-title {
+    margin: 0;
+    color: @ol-foreground;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 32px;
+    letter-spacing: @ol-letter-spacing;
+}
+
+.ol-login-product {
+    margin: .25rem 0 2rem;
+    color: @ol-foreground-subtle;
+}
+
+@media screen and (max-width: @screen-width-small) {
+    .ol-login-brand {
+        display: none;
+    }
+
+    .task-login #logo {
+        display: block;
+    }
+
+    .ol-login-panel {
+        align-items: flex-start;
+        padding-top: 15vh;
+    }
+}
+
+html.dark-mode {
+    .task-login #layout-content,
+    .ol-login-panel {
+        background: @ol-dark-background;
+    }
+
+    .ol-login-title {
+        color: @ol-dark-foreground;
+    }
+
+    .ol-login-product,
+    .task-login #login-footer {
+        color: @ol-dark-foreground-subtle;
+    }
+
+    .ol-login-brand {
+        border-right: 1px solid @ol-chrome-border;
+    }
+
+    .task-login #login-form .input-group-lg {
+        & > .form-control,
+        & > .input-group-prepend > .input-group-text {
+            border-color: @ol-dark-border-control;
+        }
+
+        & > .input-group-prepend > .input-group-text {
+            color: @ol-dark-foreground-subtle;
+            background: @ol-dark-background-raised;
+        }
+
+        & > .form-control:focus {
+            box-shadow: none !important;
+        }
+
+        &:focus-within {
+            box-shadow: 0 0 0 1px @ol-dark-background, 0 0 0 4px @ol-dark-primary-emphasis;
+
+            & > .form-control,
+            & > .input-group-prepend > .input-group-text {
+                border-color: @ol-dark-primary-emphasis;
+            }
+        }
+    }
+
+    .task-login #login-footer > div {
+        color: @ol-dark-foreground;
+        background: @ol-dark-background-raised;
+        border-color: @ol-dark-border;
+    }
+}

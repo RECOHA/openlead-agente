@@ -178,3 +178,9 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   ativa; `CHECKPOINT` e desligamento limpo do Postgres. Cada VPS voltou em ~1,5–2 min. Conferido: todos os contêineres
   de pé (healthy), firewall, fail2ban e ufw ativos, regras da `DOCKER-USER` no lugar; painel, `email.openlead.app` e
   `openlead.app/api/health` 200. Na foto, só a ordem das regras do Docker e o IP interno do proxy da VPS-00 mudaram.
+- **2026-11-10 16:37–16:39 UTC** (pedido do Renan): skin próprio `openlead` como tema padrão do Roundcube
+  (`ROUNDCUBEMAIL_SKIN`). Pasta nova na VPS-00: `/srv/roundcube/skins/openlead` (dono `root`, `go=rX`), montada só
+  leitura no contêiner. Compose pela API (`PATCH` + `restart`), contêiner fora ~15 s. Conferido: login com o tema
+  OpenLead e título "OpenLead Webmail"; CSS, logos e favicon do skin 200; HSTS, cookie `secure`, http → https,
+  instalador 404 e login sem campo de servidor. Nenhuma porta nova. Visto na foto, de fora disso: Coolify de 4.7.3
+  para 4.7.5.
