@@ -168,3 +168,9 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   `vadwerrxhzbfdlm7znomjeq9`. No firewall, só as regras internas que o Docker cria para essa rede; nenhuma porta nova.
 - **2026-11-10, visto na foto** (de fora do Roundcube): Coolify de 4.7.1 para 4.7.3. VPS-01: `openlead-ops` andou,
   com `bootstrap` terminado e `pronto` rodando.
+- **2026-11-10 11:16–11:30 UTC** (pedido do Renan): `apt upgrade` e reboot nas 3 VPS, uma por vez (VPS-10, VPS-00,
+  VPS-01). Pacotes: perl 5.40.1-7ubuntu0.4 e vim 9.1.2141-1ubuntu4.10 (e `python3-pyasn1` na VPS-10). VPS-10 passou
+  para o kernel `7.0.0-43` (as outras já estavam nele). Antes do reboot da VPS-01: worker parado e banco sem consulta
+  ativa; `CHECKPOINT` e desligamento limpo do Postgres. Cada VPS voltou em ~1,5–2 min. Conferido: todos os contêineres
+  de pé (healthy), firewall, fail2ban e ufw ativos, regras da `DOCKER-USER` no lugar; painel, `email.openlead.app` e
+  `openlead.app/api/health` 200. Na foto, só a ordem das regras do Docker e o IP interno do proxy da VPS-00 mudaram.

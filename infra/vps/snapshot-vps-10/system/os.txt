@@ -1,6 +1,6 @@
 PRETTY_NAME="Ubuntu 26.04.1 LTS"
 VERSION_ID="26.04"
-kernel=7.0.0-38-generic
+kernel=7.0.0-43-generic
 hostname=vmi3671618
 cpus=6
 mem_total=11Gi
