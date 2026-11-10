@@ -155,6 +155,10 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   as outras. VPS-01: contêineres do `openlead-ops` recriados na imagem `ops` (`bootstrap` e `pronto` em `created`) e
   a rede `vadwerrxhzbfdlm7znomjeq9` sumiu. Projeto vazio `RoundCube` no Coolify, sem uso. O `.env` do Coolify está
   diferente de `.env.coolify-instance` (pendente). Fora isso, os arquivos instalados seguem `OK`.
+- **2026-11-10** (pendência acima): `.env.coolify-instance.enc` refeito a partir do `.env` da VPS-00. A única
+  diferença era `LATEST_IMAGE` (4.6.0 → 4.7.3, da troca do Coolify). Cifrado só esse arquivo, direto com o `sops`:
+  este PC não tem a chave `age1p2ff…`, e o `secrets.sh encrypt` recifraria todos os `.enc` com as cópias abertas
+  daqui, que podem estar velhas. Conferido: o hash bate com o da VPS. Nada mudou nas VPS.
 - **2026-11-09, depois do deploy** (feito pelo Renan no painel): o projeto `Pessoal` passou a se chamar `RoundCube`
   (mesmo UUID, `88x1fnddyu2k6iwunva8p1c4`) e o projeto vazio `RoundCube` antigo foi apagado. O serviço segue `roundcube`.
 - **2026-11-09 ~16:45 UTC** (pedido do Renan): Roundcube em português do Brasil, com o arquivo novo
