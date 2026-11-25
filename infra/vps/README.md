@@ -197,4 +197,8 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   Visto na foto, de fora disso: projeto `OpenLead Scout` no Coolify (`scout-db`, `scout-migrate`, `scout-app`) rodando
   na VPS-10. O `infra/coolify/harden.sh` do Scout pôs o `00-scout.conf` no SSH, tirou 80/443 do ufw e o proxy da
   VPS-10 não existe mais desde 21/11 (~04:50 UTC). Postgres da VPS-01 na imagem `…-conf1`. O `.env` do Coolify
-  está diferente de `.env.coolify-instance` de novo (pendente, provavelmente o `LATEST_IMAGE` da troca para 4.7.5).
+  estava diferente de `.env.coolify-instance`: só o `LATEST_IMAGE`, porque o Coolify se atualizou
+  sozinho para 4.7.6 (03:51 UTC). Resolvido abaixo.
+- **2026-11-25** (pedido do Renan): `.env.coolify-instance.enc` refeito a partir do `.env` da VPS-00 (`LATEST_IMAGE`
+  4.7.3 → 4.7.6). Como em 10/11, cifrado só esse arquivo, direto com o `sops`, para a chave `age1p2ff…`. Conferido: o
+  `vps-snapshot.sh` diz `OK valores iguais`. Nada mudou nas VPS.
