@@ -98,6 +98,29 @@ scripts/vps.sh vps-01 'docker ps' # comando na VPS-01 (vale para qualquer vps-NN
 5. No Coolify: servidor `VPS-01` (root@179.197.231.251:22, chave "localhost's key"), validado; proxy Traefik e Sentinel iniciados pelo Coolify.
 6. Proxy no padrão (seção "Proxy" acima), pela API do Coolify.
 
+## Atualizar os patches
+
+Uma VPS por vez: VPS-10, VPS-00 e por último VPS-01 (a do banco).
+
+1. `apt-get update` e `apt-get -y -o Dpkg::Options::=--force-confold upgrade`. O Docker tem `live-restore`, então
+   trocar a versão dele não derruba os contêineres. Pacote "phased" (a Ubuntu libera aos poucos) fica para depois.
+2. Reboot (`systemd-run --on-active=3 systemctl reboot`) e conferir: kernel novo, sem `/var/run/reboot-required`,
+   contêineres healthy, `openlead-firewall`, fail2ban e ufw ativos, regras da `DOCKER-USER` no lugar.
+3. Só na VPS-01, antes do reboot: banco sem consulta ativa, worker parado, `CHECKPOINT` e `docker stop` no Postgres.
+   Os dois são `unless-stopped`: depois do boot, `docker start` no Postgres e, quando ele estiver healthy, no worker.
+4. Painel, `email.openlead.app` e `openlead.app/api/health` respondendo 200.
+5. **No final, mandar o Coolify reconferir os patches das 3 VPS.** Ele confere sozinho uma vez por dia (~04:00 UTC)
+   e guarda o resultado, então a tela Servers → Patches fica velha até a próxima conferência. É o mesmo que o botão do
+   painel:
+
+   ```bash
+   scripts/vps.sh vps-00 'docker exec coolify php artisan tinker --execute="foreach (App\Models\Server::all() as \$s) App\Jobs\ServerPatchCheckJob::dispatchManual(\$s);"'
+   # ~1 min depois, conferir:
+   scripts/vps.sh vps-00 'docker exec coolify php artisan tinker --execute="foreach (App\Models\Server::all() as \$s) echo \$s->name.\" | \".\$s->settings->patch_checked_at.\" | updates=\".data_get(\$s->settings->patch_check_result,\"total_updates\").\" | reboot=\".var_export(data_get(\$s->settings->patch_check_result,\"reboot_required\"),true).PHP_EOL;"'
+   ```
+
+6. Foto (`scripts/vps-snapshot.sh` nas 3), anotar no Histórico abaixo e fazer o commit.
+
 ## Foto das VPSs
 
 `snapshot/` (VPS-00) e `snapshot-vps-01/` (VPS-01) são cópias, só para leitura, de como as VPSs estão agora. Para atualizar:
@@ -202,3 +225,7 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
 - **2026-11-25** (pedido do Renan): `.env.coolify-instance.enc` refeito a partir do `.env` da VPS-00 (`LATEST_IMAGE`
   4.7.3 → 4.7.6). Como em 10/11, cifrado só esse arquivo, direto com o `sops`, para a chave `age1p2ff…`. Conferido: o
   `vps-snapshot.sh` diz `OK valores iguais`. Nada mudou nas VPS.
+- **2026-11-25 04:07 UTC** (pedido do Renan): a tela de Patches do Coolify ainda mostrava a VPS-10 com "21 updates" e
+  "Reboot required". A conferência diária do Coolify estava parada para ela desde 22/11 (as outras foram conferidas
+  hoje; nenhum erro nos logs). Reconferida com `ServerPatchCheckJob::dispatchManual`: 0 updates, sem reboot. Novo passo
+  fixo na seção "Atualizar os patches": reconferir no Coolify no final. Nada mudou nas VPS.
