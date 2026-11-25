@@ -39,6 +39,8 @@ lvm2
 lxd-agent-loader
 lxd-installer
 mdadm
+monarx-agent
+monarx-protect
 monarx-protect-autodetect
 motd-news-config
 nano

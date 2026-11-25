@@ -1,4 +1,8 @@
-coolify-proxy	traefik:v3.7.17	running
+collector-9brdufuzcnxpbms7lmih5qgs	ghcr.io/recoha/openlead-scout:producao	running
+control-9brdufuzcnxpbms7lmih5qgs	ghcr.io/recoha/openlead-scout:producao	running
 coolify-proxy-error-pages	busybox:musl	running
 coolify-proxy-logrotate	alpine:3.24	running
 coolify-sentinel	coollabsio/sentinel:1.1.5	running
+migrate-a4alqcdlk23vxwupmymg0apx	ghcr.io/recoha/openlead-scout:migrate	exited
+pronto-a4alqcdlk23vxwupmymg0apx	ghcr.io/recoha/openlead-scout:migrate	running
+scout-db-o32gbre4jyliom8mkvjfk1sv	ghcr.io/recoha/openlead-scout-postgres:18.6-pgbackrest-2.59.3-2	running

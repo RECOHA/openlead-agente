@@ -8,11 +8,13 @@ id	name	ip	user	port
 id	name
 1	OpenLead
 3	RoundCube
+4	OpenLead Scout
 
 ## environments
 id	name	project_id
 1	production	1
 3	production	3
+4	production	4
 
 ## applications
 uuid	name	fqdn	git_repository	git_branch	build_pack	environment_id
@@ -23,6 +25,9 @@ ywco8vhh6fnefyedbaqw2ak5	openlead-db	1
 vadwerrxhzbfdlm7znomjeq9	openlead-ops	1
 v47eozls3yfsq7f8cvng3wlf	openlead-app	1
 0jpqdwhvfa5vdheffsdxlwn6	roundcube	3
+o32gbre4jyliom8mkvjfk1sv	scout-db	4
+a4alqcdlk23vxwupmymg0apx	scout-migrate	4
+9brdufuzcnxpbms7lmih5qgs	scout-app	4
 
 ## databases
 

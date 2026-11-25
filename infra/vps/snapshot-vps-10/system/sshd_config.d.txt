@@ -8,6 +8,13 @@ PubkeyAuthentication yes
 X11Forwarding no
 MaxAuthTries 3
 
+### /etc/ssh/sshd_config.d/00-scout.conf
+# Gerado por infra/coolify/harden.sh (Scout). SSH só por chave.
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+
 ### /etc/ssh/sshd_config.d/50-cloud-init.conf
 PasswordAuthentication yes
 

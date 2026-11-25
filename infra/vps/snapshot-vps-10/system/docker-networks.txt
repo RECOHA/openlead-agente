@@ -1,4 +1,9 @@
+9brdufuzcnxpbms7lmih5qgs	bridge
+a4alqcdlk23vxwupmymg0apx	bridge
 bridge	bridge
 coolify	bridge
 host	host
 none	null
+o32gbre4jyliom8mkvjfk1sv	bridge
+scout	bridge
+uqwxyf4955vmsydna6bkjike	bridge

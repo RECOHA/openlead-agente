@@ -20,6 +20,7 @@
 -N ufw-before-logging-input
 -N ufw-before-logging-output
 -N ufw-before-output
+-N ufw-docker-logging-deny
 -N ufw-logging-allow
 -N ufw-logging-deny
 -N ufw-not-local
@@ -61,24 +62,53 @@
 -A OUTPUT -j ufw-after-logging-output
 -A OUTPUT -j ufw-reject-output
 -A OUTPUT -j ufw-track-output
--A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p udp -m udp --dport 443 -j ACCEPT
--A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p tcp -m tcp --dport 443 -j ACCEPT
--A DOCKER -d 10.0.1.2/32 ! -i br-eb38e5989699 -o br-eb38e5989699 -p tcp -m tcp --dport 80 -j ACCEPT
+-A DOCKER ! -i br-75d0da32a75c -o br-75d0da32a75c -j DROP
+-A DOCKER ! -i br-76c36609c7f2 -o br-76c36609c7f2 -j DROP
+-A DOCKER ! -i br-c491dd3dc5d9 -o br-c491dd3dc5d9 -j DROP
 -A DOCKER ! -i br-eb38e5989699 -o br-eb38e5989699 -j DROP
+-A DOCKER ! -i br-f33ae44d44ae -o br-f33ae44d44ae -j DROP
+-A DOCKER ! -i br-12a2303710a3 -o br-12a2303710a3 -j DROP
 -A DOCKER ! -i docker0 -o docker0 -j DROP
+-A DOCKER-BRIDGE -o br-75d0da32a75c -j DOCKER
+-A DOCKER-BRIDGE -o br-76c36609c7f2 -j DOCKER
+-A DOCKER-BRIDGE -o br-c491dd3dc5d9 -j DOCKER
 -A DOCKER-BRIDGE -o br-eb38e5989699 -j DOCKER
+-A DOCKER-BRIDGE -o br-f33ae44d44ae -j DOCKER
+-A DOCKER-BRIDGE -o br-12a2303710a3 -j DOCKER
 -A DOCKER-BRIDGE -o docker0 -j DOCKER
+-A DOCKER-CT -o br-75d0da32a75c -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o br-76c36609c7f2 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o br-c491dd3dc5d9 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A DOCKER-CT -o br-eb38e5989699 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o br-f33ae44d44ae -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A DOCKER-CT -o br-12a2303710a3 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A DOCKER-CT -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A DOCKER-FORWARD -j DOCKER-CT
 -A DOCKER-FORWARD -j DOCKER-INTERNAL
 -A DOCKER-FORWARD -j DOCKER-BRIDGE
+-A DOCKER-FORWARD -i br-75d0da32a75c -j ACCEPT
+-A DOCKER-FORWARD -i br-76c36609c7f2 -j ACCEPT
+-A DOCKER-FORWARD -i br-c491dd3dc5d9 -j ACCEPT
 -A DOCKER-FORWARD -i br-eb38e5989699 -j ACCEPT
+-A DOCKER-FORWARD -i br-f33ae44d44ae -j ACCEPT
+-A DOCKER-FORWARD -i br-12a2303710a3 -j ACCEPT
 -A DOCKER-FORWARD -i docker0 -j ACCEPT
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8080 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6002 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 6001 --ctdir ORIGINAL -j DROP
 -A DOCKER-USER -i eth0 -p tcp -m conntrack --ctorigdstport 8000 --ctdir ORIGINAL -j DROP
+-A DOCKER-USER -j ufw-user-forward
+-A DOCKER-USER -s 10.0.0.0/8 -j RETURN
+-A DOCKER-USER -s 172.16.0.0/12 -j RETURN
+-A DOCKER-USER -s 192.168.0.0/16 -j RETURN
+-A DOCKER-USER -p udp -m udp --sport 53 --dport 1024:65535 -j RETURN
+-A DOCKER-USER -d 10.0.0.0/8 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j ufw-docker-logging-deny
+-A DOCKER-USER -d 172.16.0.0/12 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j ufw-docker-logging-deny
+-A DOCKER-USER -d 192.168.0.0/16 -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -j ufw-docker-logging-deny
+-A DOCKER-USER -d 10.0.0.0/8 -p udp -m udp --dport 0:32767 -j ufw-docker-logging-deny
+-A DOCKER-USER -d 172.16.0.0/12 -p udp -m udp --dport 0:32767 -j ufw-docker-logging-deny
+-A DOCKER-USER -d 192.168.0.0/16 -p udp -m udp --dport 0:32767 -j ufw-docker-logging-deny
+-A DOCKER-USER -j RETURN
 -A ufw-after-input -p udp -m udp --dport 137 -j ufw-skip-to-policy-input
 -A ufw-after-input -p udp -m udp --dport 138 -j ufw-skip-to-policy-input
 -A ufw-after-input -p tcp -m tcp --dport 139 -j ufw-skip-to-policy-input
@@ -110,6 +140,8 @@
 -A ufw-before-output -o lo -j ACCEPT
 -A ufw-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A ufw-before-output -j ufw-user-output
+-A ufw-docker-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW DOCKER BLOCK] "
+-A ufw-docker-logging-deny -j DROP
 -A ufw-logging-allow -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW ALLOW] "
 -A ufw-logging-deny -m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
 -A ufw-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
@@ -124,9 +156,6 @@
 -A ufw-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
 -A ufw-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
 -A ufw-user-input -p tcp -m tcp --dport 22 -j ACCEPT
--A ufw-user-input -p tcp -m tcp --dport 80 -j ACCEPT
--A ufw-user-input -p tcp -m tcp --dport 443 -j ACCEPT
--A ufw-user-input -p udp -m udp --dport 443 -j ACCEPT
 -A ufw-user-limit -m limit --limit 3/min -j LOG --log-prefix "[UFW LIMIT BLOCK] "
 -A ufw-user-limit -j REJECT --reject-with icmp-port-unreachable
 -A ufw-user-limit-accept -j ACCEPT
@@ -285,9 +314,6 @@
 -A ufw6-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
 -A ufw6-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
 -A ufw6-user-input -p tcp -m tcp --dport 22 -j ACCEPT
--A ufw6-user-input -p tcp -m tcp --dport 80 -j ACCEPT
--A ufw6-user-input -p tcp -m tcp --dport 443 -j ACCEPT
--A ufw6-user-input -p udp -m udp --dport 443 -j ACCEPT
 -A ufw6-user-limit -m limit --limit 3/min -j LOG --log-prefix "[UFW LIMIT BLOCK] "
 -A ufw6-user-limit -j REJECT --reject-with icmp6-port-unreachable
 -A ufw6-user-limit-accept -j ACCEPT

@@ -24,7 +24,7 @@ chave mudou. Depois de formatar uma VPS, grave a chave nova: `ssh-keyscan -t ed2
 
 O deploy do OpenLead no Coolify está em [`../openlead/README.md`](../openlead/README.md).
 
-Todas usam Ubuntu 26.04 e Docker 29.9.3, e recebem os mesmos arquivos abaixo.
+Todas usam Ubuntu 26.04 e Docker 29.10.1, e recebem os mesmos arquivos abaixo.
 
 | Arquivo | Destino na VPS | Função |
 |---|---|---|
@@ -184,3 +184,17 @@ Configuradas em `.claude/settings.json` (copiadas do agent-global e adaptadas):
   OpenLead e título "OpenLead Webmail"; CSS, logos e favicon do skin 200; HSTS, cookie `secure`, http → https,
   instalador 404 e login sem campo de servidor. Nenhuma porta nova. Visto na foto, de fora disso: Coolify de 4.7.3
   para 4.7.5.
+- **2026-11-25 03:40–03:58 UTC** (pedido do Renan): `apt upgrade` e reboot nas 3 VPS, uma por vez (VPS-10, VPS-00,
+  VPS-01). O `unattended-upgrades` já tinha posto o kernel `7.0.0-44` e a `libc6` em 24/11 (faltava o reboot). Pacotes:
+  Docker 29.9.3 → 29.10.1 (`containerd.io` 2.4.2-4, compose 5.8.0, buildx 0.39.1), `fwupd` 2.1.6, `snapd` 2.78,
+  `software-properties` 0.120.2, `distro-info` 1.15ubuntu0.1 e, na VPS-01, `monarx-agent` 4.3.91 (agente da Hostinger).
+  `libsqlite3-0` 3.46.1-9ubuntu0.4 ficou de fora: a Ubuntu ainda libera só para 20% das máquinas (phased). Com o
+  `live-restore`, nenhum contêiner caiu na troca do Docker. Antes do reboot da VPS-01: banco sem consulta ativa e
+  backup das 03:00 feito; worker parado, `CHECKPOINT` e Postgres desligado limpo (`docker stop`). Como os dois são
+  `unless-stopped`, foi preciso `docker start` neles depois do boot (primeiro o Postgres, depois o worker). Conferido:
+  kernel `7.0.0-44` e sem `reboot-required` nas 3; contêineres healthy; firewall, fail2ban e ufw ativos, regras da
+  `DOCKER-USER` no lugar; painel, `email.openlead.app` e `openlead.app/api/health` 200.
+  Visto na foto, de fora disso: projeto `OpenLead Scout` no Coolify (`scout-db`, `scout-migrate`, `scout-app`) rodando
+  na VPS-10. O `infra/coolify/harden.sh` do Scout pôs o `00-scout.conf` no SSH, tirou 80/443 do ufw e o proxy da
+  VPS-10 não existe mais desde 21/11 (~04:50 UTC). Postgres da VPS-01 na imagem `…-conf1`. O `.env` do Coolify
+  está diferente de `.env.coolify-instance` de novo (pendente, provavelmente o `LATEST_IMAGE` da troca para 4.7.5).
